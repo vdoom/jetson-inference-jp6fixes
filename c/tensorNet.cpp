@@ -1641,13 +1641,13 @@ bool tensorNet::LoadEngine( nvinfer1::ICudaEngine* engine,
         nvinfer1::Dims outputDims = engine->getTensorShape(output_blobs[n].c_str());
 	#elif NV_TENSORRT_MAJOR > 1
 		nvinfer1::Dims outputDims = validateDims(engine->getBindingDimensions(outputIndex));
+	#else
+		Dims3 outputDims = engine->getBindingDimensions(outputIndex);
+	#endif
 
 	#if NV_TENSORRT_MAJOR >= 7
 		if( mModelType == MODEL_ONNX )
 			outputDims = shiftDims(outputDims);  // change NCHW to CHW if EXPLICIT_BATCH set
-	#endif
-	#else
-		Dims3 outputDims = engine->getBindingDimensions(outputIndex);
 	#endif
 
 		const size_t outputSize = mMaxBatchSize * sizeDims(outputDims) * sizeof(float);
@@ -1665,9 +1665,9 @@ bool tensorNet::LoadEngine( nvinfer1::ICudaEngine* engine,
 		}
 	
     #if NV_TENSORRT_MAJOR >= 10
-        if( !mContext->setTensorAddress(output_blobs[n].c_str(), outputCUDA) )
+        if( !context->setTensorAddress(output_blobs[n].c_str(), outputCUDA) )
         {
-            LogError(LOG_TRT "failed to set input tensor address for %s (%zu bytes)\n", outputSize, output_blobs[n].c_str());
+            LogError(LOG_TRT "failed to set output tensor address for %s (%zu bytes)\n", output_blobs[n].c_str(), outputSize);
 			return false;
         }  
     #endif
