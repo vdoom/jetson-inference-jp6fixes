@@ -254,8 +254,8 @@ Next we just need to create a simple makefile for our new recognition program wi
 Open the file `~/my-recognition/CMakeLists.txt` in editor, and add the following code:
 
 ``` cmake
-# require CMake 2.8 or greater
-cmake_minimum_required(VERSION 2.8)
+# require CMake 3.10 or greater
+cmake_minimum_required(VERSION 3.10)
 
 # declare my-recognition project
 project(my-recognition)
