@@ -85,6 +85,7 @@ endif()
 file(GLOB pythonExtSources *.cpp)
 
 set(_PYMOD jetson-inference-python-${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
+set(CUDA_LINK_LIBRARIES_KEYWORD PRIVATE)
 cuda_add_library(${_PYMOD} SHARED ${pythonExtSources})
 
 # Per-target includes and links (avoid global include/link directories)
