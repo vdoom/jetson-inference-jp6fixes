@@ -2,10 +2,6 @@
 	path = utils
 	url = https://github.com/vdoom/jetson-utils-JP6Fixes.git
 	branch = master
-[submodule "tools/camera-capture"]
-	path = tools/camera-capture
-	url = https://github.com/dusty-nv/camera-capture
-	branch = master
 [submodule "python/training/classification"]
 	path = python/training/classification
 	url = https://github.com/dusty-nv/pytorch-classification
@@ -28,3 +24,6 @@
 [submodule "ros"]
 	path = ros
 	url = https://github.com/dusty-nv/ros_deep_learning
+[submodule "tools/camera-capture"]
+	path = tools/camera-capture
+	url = https://github.com/vdoom/camera-captureJP6FIX.git

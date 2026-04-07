@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git submodule:*)",
+      "Bash(rm -rf .git/modules/tools/camera-capture)",
+      "Bash(git rm:*)"
+    ]
+  }
+}
