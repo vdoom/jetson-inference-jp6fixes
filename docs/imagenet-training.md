@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="imagenet-camera.md">Back</a> | <a href="imagenet-snapshot.md">Next</a> | </sup><a href="../README.md#two-days-to-a-demo-digits"><sup>Contents</sup></a>
 <br/>
 <sup>Image Recognition</sup></p> 
@@ -87,7 +87,7 @@ In this example the links are created in the `12_classes` folder, with the first
 
 Navigate your browser to your DIGITS server instance and choose to create a new `Classification Dataset` from the drop-down under the Datasets tab:
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-digits-new-dataset-menu.png" width="250">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-digits-new-dataset-menu.png" width="250">
 
 Set the `Training Images` path to the `12_classes` folder from the previous step and make the following
 
@@ -95,7 +95,7 @@ Set the `Training Images` path to the `12_classes` folder from the previous step
 * Group Name:  `ImageNet`
 * Dataset Name: `ImageNet-ILSVRC12-subset`
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-digits-new-dataset.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-digits-new-dataset.png)
 
 Use the `Create` button at the bottom of the page to launch the dataset import job.  The size of the data subset is around 20GB, so depending on server I/O performance it takes 10-15 minutes.  Next we'll create the new model and begin training it.
 
@@ -103,7 +103,7 @@ Use the `Create` button at the bottom of the page to launch the dataset import j
 
 When the previous data import job is complete, return to the DIGITS home screen.  Select the `Models` tab and choose to create a new `Classification Model` from the drop-down:
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-digits-new-model-menu.png" width="250">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-digits-new-model-menu.png" width="250">
 
 Make the following settings in the form:
 
@@ -115,21 +115,21 @@ Make the following settings in the form:
 
 After selecting a GPU to train on, click the `Create` button at the bottom to begin training.
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-digits-new-model.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-digits-new-model.png)
 
 ### Testing Classification Model in DIGITS
 
 After the training job completes 30 epochs, the trained model should appear like so:
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-digits-model.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-digits-model.png)
 
 At this point, we can try testing our new model's inference on some example images in DIGITS.  On the same page as the plot above, scroll down under the `Trained Models` section.  Under `Test a Single Image`, select an image to try (for example, `/ilsvrc12/n02127052/n02127052_1203.jpg`):
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-digits-test-single-image.png" width="350">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-digits-test-single-image.png" width="350">
 
 Press the `Classify One` button and you should see a page similar to:
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-digits-infer-cat.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-digits-infer-cat.png)
 
 The image is classified as the new GoogleNet-12 model as `cat`, while in the original GoogleNet-1000 it was under `Lynx`.  This indicates the new model is working ok, because the Lynx category was included in GoogleNet-12's training of cat.
 

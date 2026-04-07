@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 
 # Change Log
 
@@ -16,11 +16,11 @@ Major updates and new features to this project will be listed in this document.
 * Added [`actionNet`](docs/actionnet.md) (action/activity recognition)
 * Added [`backgroundNet`](docs/backgroundnet.md) (foreground/background segmentation/removal)
 * Added [`objectTracker`](c/tracking) - [IoU object tracking](docs/detectnet-tracking.md) for detectNet
-* [Image Tagging and Multi-Label Classification](docs/imagenet-tagging.md) (support for [`topK`](https://github.com/dusty-nv/jetson-inference/blob/b50bf1d5eefed73acda5c963513e0d8c79d18be3/c/imageNet.h#L201) in imageNet)
-* [Temporal smoothing of classification results](https://github.com/dusty-nv/jetson-inference/blob/b50bf1d5eefed73acda5c963513e0d8c79d18be3/c/imageNet.h#L271) in imageNet
+* [Image Tagging and Multi-Label Classification](docs/imagenet-tagging.md) (support for [`topK`](https://github.com/vdoom/jetson-inference-jp6fixes/blob/b50bf1d5eefed73acda5c963513e0d8c79d18be3/c/imageNet.h#L201) in imageNet)
+* [Temporal smoothing of classification results](https://github.com/vdoom/jetson-inference-jp6fixes/blob/b50bf1d5eefed73acda5c963513e0d8c79d18be3/c/imageNet.h#L271) in imageNet
 * Automatic model downloader => [`data/networks/models.json`](data/networks/models.json)
 * Build TensorRT timing cache for quick loading of updated models (or models that share layer configurations)
-* Zero-copy interoperability of Python [cudaImage](https://github.com/dusty-nv/jetson-inference/blob/master/docs/aux-image.md#image-capsules-in-python) with other libraries:
+* Zero-copy interoperability of Python [cudaImage](https://github.com/vdoom/jetson-inference-jp6fixes/blob/master/docs/aux-image.md#image-capsules-in-python) with other libraries:
    * [`__cuda_array_interface__`](docs/aux-image.md#cuda-array-interface) (Numba, PyTorch, CuPy, PyCUDA, VPI, and [others](https://numba.readthedocs.io/en/stable/cuda/cuda_array_interface.html#interoperability))
    * [`__array__`](docs/aux-image.md#accessing-as-a-numpy-array) interface ([Numpy](https://numpy.org/doc/stable/reference/arrays.interface.html)) 
 * Train higher-resolution detection models with [`train_ssd.py --resolution=N`](https://github.com/dusty-nv/pytorch-ssd/blob/86155c0c410e0959df0184b24af6a8f59f49fbe5/train_ssd.py#L49)

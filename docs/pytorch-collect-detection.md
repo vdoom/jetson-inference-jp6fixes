@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="pytorch-plants.md">Back</a> | <a href="../README.md#webapp-frameworks">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Transfer Learning - Object Detection</sup></s></p>
@@ -7,7 +7,7 @@
 
 The previously used `camera-capture` tool can also label object detection datasets from live video:
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/pytorch-collection-detect.jpg" >
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/pytorch-collection-detect.jpg" >
 
 When the `Dataset Type` drop-down is in Detection mode, the tool creates datasets in [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) format (which is supported during training).
 
@@ -47,7 +47,7 @@ $ camera-capture /dev/video0   # using V4L2 camera /dev/video0
 
 Below is the `Data Capture Control` window, after the `Dataset Type` drop-down has been set to Detection mode (do this first).
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/pytorch-collection-detection-widget.jpg" >
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/pytorch-collection-detection-widget.jpg" >
 
 Then, open the dataset path and class labels that you created.  The `Freeze/Edit` and `Save` buttons will then become active. 
 

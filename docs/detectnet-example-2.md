@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="detectnet-camera-2.md">Back</a> | <a href="detectnet-tao.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Object Detection</sup></p>
@@ -31,7 +31,7 @@ while display.IsStreaming():
 
 There's also a video screencast of this coding tutorial available on YouTube:
 
-<a href="https://www.youtube.com/watch?v=obt60r8ZeB0&list=PL5B692fm6--uQRRDTPsJDp4o0xbzkoyf8&index=12" target="_blank"><img src=https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/thumbnail_detectnet.jpg width="750"></a>
+<a href="https://www.youtube.com/watch?v=obt60r8ZeB0&list=PL5B692fm6--uQRRDTPsJDp4o0xbzkoyf8&index=12" target="_blank"><img src=https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/thumbnail_detectnet.jpg width="750"></a>
 ## Source Code
 
 First, open up your text editor of choice and create a new file.  Below we'll assume that you'll save it on your host device under your user's home directory as `~/my-detection.py`, but you can name and store it where you wish.  If you're using the Docker container, you'll want to store your code in a [Mounted Directory](aux-docker.md#mounted-data-volumes), similar to what we did in the [Image Recognition Python Example](imagenet-example-python-2.md#setting-up-the-project).

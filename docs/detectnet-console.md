@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="detectnet-snapshot.md">Back</a> | <a href="detectnet-camera.md">Next</a> | </sup><a href="../README.md#two-days-to-a-demo-digits"><sup>Contents</sup></a>
 <br/>
 <sup>Object Detection</sup></s></p>
@@ -24,7 +24,7 @@ $ ./detectnet-console dog_0.jpg output_0.jpg \
 
 > **note:**  the `input_blob`, `output_cvg`, and `output_bbox` arguments may be omitted if your DetectNet layer names match the defaults above (i.e. if you are using the prototxt from following this tutorial). These optional command line parameters are provided if you are using a customized DetectNet with different layer names.
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-tensorRT-dog-0.jpg)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-tensorRT-dog-0.jpg)
 
 ### Launching With a Pretrained Model
 
@@ -44,7 +44,7 @@ $ ./detectnet-console peds-004.jpg output.jpg
 $ ./detectnet-console.py peds-004.jpg output.jpg
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-peds-00.jpg" width="900">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-peds-00.jpg" width="900">
 
 
 ### Pre-trained Detection Models Available
@@ -83,7 +83,7 @@ $ ./detectnet-console --network=coco-dog dog_1.jpg output_1.jpg
 $ ./detectnet-console.py --network=coco-dog dog_1.jpg output_1.jpg
 ```
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-tensorRT-dog-1.jpg)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-tensorRT-dog-1.jpg)
 
 ``` bash
 # C++
@@ -93,7 +93,7 @@ $ ./detectnet-console --network=coco-bottle bottle_0.jpg output_2.jpg
 $ ./detectnet-console.py --network=coco-bottle bottle_0.jpg output_2.jpg
 ```
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-tensorRT-bottle-0.jpg)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-tensorRT-bottle-0.jpg)
 
 ``` bash
 # C++
@@ -103,7 +103,7 @@ $ ./detectnet-console --network=coco-airplane airplane_0.jpg output_3.jpg
 $ ./detectnet-console.py --network=coco-airplane airplane_0.jpg output_3.jpg
 ```
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-tensorRT-airplane-0.jpg)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-tensorRT-airplane-0.jpg)
 
 
 ### Multi-class Object Detection Models
@@ -118,7 +118,7 @@ $ ./detectnet-console --network=multiped peds-003.jpg output_4.jpg
 $ ./detectnet-console.py --network=multiped peds-003.jpg output_4.jpg
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-peds-01.jpg" width="900">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-peds-01.jpg" width="900">
 
 Next, we'll run object detection on a live camera stream.
 

@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="detectnet-console.md">Back</a> | <a href="segnet-dataset.md">Next</a> | </sup><a href="../README.md#two-days-to-a-demo-digits"><sup>Contents</sup></a>
 <br/>
 <sup>Object Detection</sup></p>
@@ -65,7 +65,7 @@ $ ./detectnet-camera --network=coco-dog
 $ ./detectnet-camera.py --network=coco-dog
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet_camera_dog.jpg" width="800">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet_camera_dog.jpg" width="800">
 
 <br/>
 

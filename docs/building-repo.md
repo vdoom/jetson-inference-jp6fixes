@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg">
 <p align="right"><sup><a href="jetpack-setup.md">Back</a> | <a href="imagenet-console.md">Next</a> | </sup><a href="../README.md#two-days-to-a-demo-digits"><sup>Contents</sup></a>
 <br/>
 <sup>System Setup</sup></p>   
@@ -18,7 +18,7 @@ Here's a condensed form of the commands to download, build, and install the proj
 ``` bash
 $ sudo apt-get update
 $ sudo apt-get install git cmake libpython3-dev python3-numpy
-$ git clone --recursive https://github.com/dusty-nv/jetson-inference
+$ git clone --recursive https://github.com/vdoom/jetson-inference-jp6fixes
 $ cd jetson-inference
 $ mkdir build
 $ cd build
@@ -41,7 +41,7 @@ $ sudo apt-get install git cmake
 Then clone the `jetson-inference` project:
 
 ``` bash
-$ git clone https://github.com/dusty-nv/jetson-inference
+$ git clone https://github.com/vdoom/jetson-inference-jp6fixes
 $ cd jetson-inference
 $ git submodule update --init
 ```
@@ -86,7 +86,7 @@ When initially configuring the project, `cmake` will automatically run the downl
 <img src="https://raw.githubusercontent.com/dusty-nv/jetson-inference/master/docs/images/download-models.jpg" width="650">
 
 > **note**: for users that are unable to connect to Box.com to download the models, a mirror is provided here:<br/>
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[`https://github.com/dusty-nv/jetson-inference/releases`](https://github.com/dusty-nv/jetson-inference/releases)
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[`https://github.com/vdoom/jetson-inference-jp6fixes/releases`](https://github.com/vdoom/jetson-inference-jp6fixes/releases)
 
 To run the Model Downloader tool again later, you can use the following commands:
 

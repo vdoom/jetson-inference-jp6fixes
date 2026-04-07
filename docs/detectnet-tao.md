@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="detectnet-example-2.md">Back</a> | <a href="detectnet-tracking.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Object Detection</sup></p>
@@ -21,7 +21,7 @@ Although a [section below](#importing-your-own-tao-detection-models) covers how 
 
 [PeopleNet](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/peoplenet) is a high-resolution 960x544 model with up to ~90% accuracy for detecting people, bags, and faces.  It's based on DetectNet_v2 with a ResNet-34 backbone.  Launching detectnet/detectnet.py with `--model=peoplenet` will run the TAO PeopleNet model with INT8 precision on platforms that support it (FP16 otherwise).  There's also the `peoplenet-pruned` model which is faster and slightly less accurate.
 
-<a href="https://youtu.be/rWGTxeb3Nrw" target="_blank"><img src=https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-tao-peoplenet-youtube.jpg></a>
+<a href="https://youtu.be/rWGTxeb3Nrw" target="_blank"><img src=https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-tao-peoplenet-youtube.jpg></a>
 
 
 ``` bash
@@ -41,7 +41,7 @@ You can also adjust the `--confidence` and `--clustering` thresholds - these TAO
 
 Like PeopleNet, [DashCamNet](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/dashcamnet) is a 960x544 detector based on DetectNet_v2 and ResNet-34.  It's intended use is for detecting people and vehicles from street-level viewpoints and first-person perspectives.  TrafficCamNet is similar, for imagery taken from a higher vantage point.
 
-<a href="https://www.youtube.com/watch?v=tsugHIgFrwI" target="_blank"><img src=https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-tao-dashcamnet-youtube.jpg></a>
+<a href="https://www.youtube.com/watch?v=tsugHIgFrwI" target="_blank"><img src=https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-tao-dashcamnet-youtube.jpg></a>
 
 ``` bash
 # C++
@@ -57,7 +57,7 @@ $ detectnet.py --model=dashcamnet input.mp4 output.mp4
 
 [FaceDetect](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/facenet) is a TAO model for just detecting faces.  It was trained with up to ~85% accuracy on a dataset with more than 1.8M samples taken from a variety of camera angles.  It has a resolution of 736x416 and uses DetectNet_v2 with a ResNet-18 backbone.
 
-<img src=https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-tao-facenet.jpg>
+<img src=https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-tao-facenet.jpg>
 
 ``` bash
 # C++
@@ -114,7 +114,7 @@ $ detectnet \
 
 > **note**: only TAO DetectNet_v2 models are currently supported in jetson-inference, as it is setup for that network's pre/post-processing
 
-In your own applications, you can also load them directly from [C++](https://rawgit.com/dusty-nv/jetson-inference/master/docs/html/classdetectNet.html#a9981735c38d2cb97205aa9e255ab4a0e) or [Python](https://github.com/dusty-nv/jetson-inference/blob/89a9bbe8812ec8a142910ae55e9a6c25dbdb9841/python/examples/detectnet.py#L57) by using the extended form of the detectNet API.
+In your own applications, you can also load them directly from [C++](https://rawgit.com/dusty-nv/jetson-inference/master/docs/html/classdetectNet.html#a9981735c38d2cb97205aa9e255ab4a0e) or [Python](https://github.com/vdoom/jetson-inference-jp6fixes/blob/89a9bbe8812ec8a142910ae55e9a6c25dbdb9841/python/examples/detectnet.py#L57) by using the extended form of the detectNet API.
 
 <p align="right">Next | <b><a href="detectnet-tracking.md">Object Tracking on Video</a></b>
 <br/>

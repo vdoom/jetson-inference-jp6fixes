@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="detectnet-tao.md">Back</a> | <a href="segnet-console-2.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Object Detection</sup></p>
@@ -7,7 +7,7 @@
 
 Although with the accuracy of modern detection DNNs you can essentially do "tracking by detection", some degree of temporal filtering can be beneficial to smooth over blips in the detections and temporary occlusions in the video.  jetson-inference includes basic (but fast) multi-object tracking using frame-to-frame IOU (intersection-over-union) bounding box comparisons from [`High-Speed Tracking-by-Detection Without Using Image Information`](http://elvera.nue.tu-berlin.de/typo3/files/1517Bochinski2017.pdf) (DeepStream has more comprehensive tracking implementations available [from here](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvtracker.html)).
 
-<a href="https://www.youtube.com/watch?v=L8vwuXKQrow" target="_blank"><img src=https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-tracking-pedestrians-youtube.jpg></a>
+<a href="https://www.youtube.com/watch?v=L8vwuXKQrow" target="_blank"><img src=https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-tracking-pedestrians-youtube.jpg></a>
 
 To enable tracking with detectnet/detectnet.py, run it with the `--tracking` flag.  
 

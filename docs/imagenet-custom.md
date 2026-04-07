@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="imagenet-snapshot.md">Back</a> | <a href="detectnet-training.md">Next</a> | </sup><a href="../README.md#two-days-to-a-demo-digits"><sup>Contents</sup></a>
 <br/>
 <sup>Image Recognition</sup></p> 
@@ -20,7 +20,7 @@ $ ./imagenet-console bird_0.jpg output_0.jpg \
 
 As before, the classification and confidence will be overlayed to the output image.  When compared to the output of the original network, the retrained GoogleNet-12 makes similar classifications to the original GoogleNet-1000, except that now it outputs the meta-classes that we've retrained it with:
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-tensorRT-console-bird.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-tensorRT-console-bird.png)
 
 The extended command line parameters above also load custom classification models with [`imagenet-camera`](../examples/imagenet-camera/imagenet-camera.cpp). 
 

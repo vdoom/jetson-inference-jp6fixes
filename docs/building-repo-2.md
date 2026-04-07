@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="aux-docker.md">Back</a> | <a href="imagenet-console-2.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>System Setup</sup></p>   
@@ -14,7 +14,7 @@ If you aren't using the [Docker container](aux-docker.md), here's a condensed fo
 ``` bash
 sudo apt-get update
 sudo apt-get install git cmake libpython3-dev python3-numpy
-git clone --recursive --depth=1 https://github.com/dusty-nv/jetson-inference
+git clone --recursive --depth=1 https://github.com/vdoom/jetson-inference-jp6fixes
 cd jetson-inference
 mkdir build
 cd build
@@ -37,7 +37,7 @@ $ sudo apt-get install git cmake
 Then clone the `jetson-inference` project:
 
 ``` bash
-$ git clone https://github.com/dusty-nv/jetson-inference
+$ git clone https://github.com/vdoom/jetson-inference-jp6fixes
 $ cd jetson-inference
 $ git submodule update --init
 ```

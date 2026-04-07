@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="detectnet-tracking.md">Back</a> | <a href="segnet-camera-2.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Semantic Segmentation</sup></s></p>
@@ -6,7 +6,7 @@
 # Semantic Segmentation with SegNet
 The next deep learning capability we'll cover in this tutorial is **semantic segmentation**.  Semantic segmentation is based on image recognition, except the classifications occur at the pixel level as opposed to the entire image.  This is accomplished by *convolutionalizing* a pre-trained image recognition backbone, which transforms the model into a [Fully Convolutional Network (FCN)](https://arxiv.org/abs/1605.06211) capable of per-pixel labeling.  Especially useful for environmental perception, segmentation yields dense per-pixel classifications of many different potential objects per scene, including scene foregrounds and backgrounds.
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation.jpg">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation.jpg">
 
 [`segNet`](../c/segNet.h) accepts as input the 2D image, and outputs a second image with the per-pixel classification mask overlay.  Each pixel of the mask corresponds to the class of object that was classified.  [`segNet`](../c/segNet.h) is available to use from [Python](https://rawgit.com/dusty-nv/jetson-inference/master/docs/html/python/jetson.inference.html#segNet) and [C++](../c/segNet.h).  
 
@@ -82,7 +82,7 @@ $ ./segnet --network=fcn-resnet18-cityscapes images/city_0.jpg images/test/outpu
 $ ./segnet.py --network=fcn-resnet18-cityscapes images/city_0.jpg images/test/output.jpg
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-city.jpg" width="1000">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-city.jpg" width="1000">
 
 There are more test images called `city-*.jpg` found under the `images/` subdirectory for trying out the Cityscapes model.
 
@@ -103,8 +103,8 @@ $ ./segnet.py --network=fcn-resnet18-deepscene images/trail_0.jpg images/test/ou
 $ ./segnet.py --network=fcn-resnet18-deepscene --visualize=mask images/trail_0.jpg images/test/output_mask.jpg # mask
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-deepscene-0-overlay.jpg" width="850">
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-deepscene-0-mask.jpg">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-deepscene-0-overlay.jpg" width="850">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-deepscene-0-mask.jpg">
 
 There are more sample images called `trail-*.jpg` located under the `images/` subdirectory.
 
@@ -121,12 +121,12 @@ $ ./segnet --network=fcn-resnet18-mhp images/humans_0.jpg images/test/output.jpg
 $ ./segnet.py --network=fcn-resnet18-mhp images/humans_0.jpg images/test/output.jpg
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-mhp-0.jpg" width="825">
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-mhp-1.jpg" width="825">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-mhp-0.jpg" width="825">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-mhp-1.jpg" width="825">
 
 #### MHP Classes
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-mhp-legend.jpg">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-mhp-legend.jpg">
 
 ### Pascal VOC
 
@@ -140,11 +140,11 @@ $ ./segnet --network=fcn-resnet18-voc images/object_0.jpg images/test/output.jpg
 $ ./segnet.py --network=fcn-resnet18-voc images/object_0.jpg images/test/output.jpg
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-voc.jpg" width="1000">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-voc.jpg" width="1000">
 
 #### VOC Classes
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-voc-legend.jpg">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-voc-legend.jpg">
 
 ### SUN RGB-D
 
@@ -158,11 +158,11 @@ $ ./segnet --network=fcn-resnet18-sun images/room_0.jpg images/test/output.jpg
 $ ./segnet.py --network=fcn-resnet18-sun images/room_0.jpg images/test/output.jpg
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-sun.jpg" width="1000">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-sun.jpg" width="1000">
 
 #### SUN Classes
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-sun-legend.jpg">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-sun-legend.jpg">
 
 ### Processing a Directory or Sequence of Images
 

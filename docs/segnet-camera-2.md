@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="segnet-console-2.md">Back</a> | <a href="posenet.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Semantic Segmentation</sup></s></p>
@@ -54,7 +54,7 @@ $ ./segnet --network=fcn-resnet18-mhp csi://0
 $ ./segnet.py --network=fcn-resnet18-mhp csi://0
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-mhp-camera.jpg" width="900">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-mhp-camera.jpg" width="900">
 
 ``` bash
 # C++
@@ -64,7 +64,7 @@ $ ./segnet --network=fcn-resnet18-sun csi://0
 $ ./segnet.py --network=fcn-resnet18-sun csi://0
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-sun-camera.jpg" width="900">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-sun-camera.jpg" width="900">
 
 ``` bash
 # C++
@@ -74,7 +74,7 @@ $ ./segnet --network=fcn-resnet18-deepscene csi://0
 $ ./segnet.py --network=fcn-resnet18-deepscene csi://0
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-deepscene-camera.jpg" width="900">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-deepscene-camera.jpg" width="900">
 
 Feel free to experiment with the different models and resolutions for indoor and outdoor environments.  
 

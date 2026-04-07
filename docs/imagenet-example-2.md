@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="imagenet-example-python-2.md">Back</a> | <a href="imagenet-camera-2.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Image Classification</sup></p>  
@@ -92,9 +92,9 @@ $ mkdir ~/my-recognition
 $ cd ~/my-recognition
 $ touch my-recognition.cpp
 $ touch CMakeLists.txt
-$ wget https://github.com/dusty-nv/jetson-inference/raw/master/data/images/black_bear.jpg 
-$ wget https://github.com/dusty-nv/jetson-inference/raw/master/data/images/brown_bear.jpg
-$ wget https://github.com/dusty-nv/jetson-inference/raw/master/data/images/polar_bear.jpg 
+$ wget https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/black_bear.jpg 
+$ wget https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/brown_bear.jpg
+$ wget https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/polar_bear.jpg 
 ```
 
 Some test images are also downloaded to the folder with the `wget` commands above.  
@@ -316,19 +316,19 @@ Now that our program is compiled, let's classify the test images that we [downlo
 $ ./my-recognition polar_bear.jpg
 image is recognized as 'ice bear, polar bear, Ursus Maritimus, Thalarctos maritimus' (class #296) with 99.999878% confidence
 ```
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/data/images/polar_bear.jpg" width="400">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/polar_bear.jpg" width="400">
 
 ``` bash
 $ ./my-recognition brown_bear.jpg
 image is recognized as 'brown bear, bruin, Ursus arctos' (class #294) with 99.928925% confidence
 ```
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/data/images/brown_bear.jpg" width="400">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/brown_bear.jpg" width="400">
 
 ``` bash
 $ ./my-recognition black_bear.jpg
 image is recognized as 'American black bear, black bear, Ursus americanus, Euarctos americanus' (class #295) with 98.898628% confidence
 ```
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/data/images/black_bear.jpg" width="400">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/black_bear.jpg" width="400">
 
 This is the conclusion of this section of the tutorial.  Next, we'll classify a live video feed from the Jetson onboard camera.
 

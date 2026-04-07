@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="segnet-camera-2.md">Back</a> | <a href="actionnet.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Pose Estimation</sup></s></p>
@@ -6,7 +6,7 @@
 # Pose Estimation
 Pose estimation consists of locating various body parts (aka keypoints) that form a skeletal topology (aka links). Pose estimation has a variety of applications including gestures, AR/VR, HMI (human/machine interface), and posture/gait correction. [Pre-trained models](#pre-trained-pose-estimation-models) are provided for human body and hand pose estimation that are capable of detecting multiple people per frame.  
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/posenet-0.jpg">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/posenet-0.jpg">
 
 The [`poseNet`](../c/poseNet.h) object accepts an image as input, and outputs a list of object poses.  Each object pose contains a list of detected keypoints, along with their locations and links between keypoints.  You can query these to find particular features.  [`poseNet`](../c/poseNet.h) can be used from [Python](https://rawgit.com/dusty-nv/jetson-inference/master/docs/html/python/jetson.inference.html#poseNet) and [C++](../c/poseNet.h).
 
@@ -40,7 +40,7 @@ $ ./posenet "images/humans_*.jpg" images/test/pose_humans_%i.jpg
 $ ./posenet.py "images/humans_*.jpg" images/test/pose_humans_%i.jpg
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/posenet-1.jpg">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/posenet-1.jpg">
 
 > **note**:  the first time you run each model, TensorRT will take a few minutes to optimize the network. <br/>
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this optimized network file is then cached to disk, so future runs using the model will load faster.
@@ -59,7 +59,7 @@ $ ./posenet /dev/video0     # csi://0 if using MIPI CSI camera
 $ ./posenet.py /dev/video0  # csi://0 if using MIPI CSI camera
 ```
 
-<a href="https://www.youtube.com/watch?v=hwFtWYR986Q" target="_blank"><img src=https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/posenet-video-body.jpg width="750"></a>
+<a href="https://www.youtube.com/watch?v=hwFtWYR986Q" target="_blank"><img src=https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/posenet-video-body.jpg width="750"></a>
 
 ``` bash
 # C++
@@ -69,7 +69,7 @@ $ ./posenet --network=resnet18-hand /dev/video0
 $ ./posenet.py --network=resnet18-hand /dev/video0
 ```
 
-<a href="https://www.youtube.com/watch?v=6NL_IE44vRE" target="_blank"><img src=https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/posenet-video-hands.jpg width="750"></a>
+<a href="https://www.youtube.com/watch?v=6NL_IE44vRE" target="_blank"><img src=https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/posenet-video-hands.jpg width="750"></a>
 
 ## Pre-trained Pose Estimation Models
 

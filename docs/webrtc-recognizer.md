@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="webrtc-dash.md">Back</a> | <a href="aux-streaming.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>WebApp Frameworks</sup></s></p>
@@ -7,7 +7,7 @@
 
 The Recognizer is a Flask-based video tagging/classification webapp with interactive data collection and training.  As video is tagged and recorded, an updated model is incrementally re-trained in the background with PyTorch and then used for inference with TensorRT.  Both inference and training can run simultaneously, and the re-trained models are dynamically loaded at runtime for inference.
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/webrtc-recognizer.jpg" width="600">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/webrtc-recognizer.jpg" width="600">
 
 It also supports multi-label tagging, and in addition to recording client video over WebRTC, existing images can be uploaded from the client. The main source files for this example (found under [`python/www/recognizer`](../python/www/recognizer)) are as follows:
 
@@ -37,7 +37,7 @@ After running app.py, you should be able to navigate your browser to `https://<J
 
 If needed first select a client camera from the stream source dropdown on the webpage, and press the `Send` button.  When ready, enter class tag(s) of what the camera is looking at in the Tags selection box.  Once a tag is entered, you'll be able to either Record or Upload images into the dataset.  You can hold down the Record button to capture a video sequence.  Below is a high-level diagram of the data flow:
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/webrtc-recognizer-diagram.jpg">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/webrtc-recognizer-diagram.jpg">
 
 It's recommended to keep the distribution of tags across the classes relatively balanced - otherwise the model will be more likely to be biased towards certain classes.  You can view the label distribution and number of images in the dataset by expanding the `Training` dropdown.
 
@@ -64,7 +64,7 @@ There are various command-line options for the training that you can set when st
 
 Inference can be enabled under the `Classification` dropdown.  When multi-label classification is used (i.e. the dataset contains images with multiple tags), all classification results will be shown that have confidence scores above the threshold that can be controlled from the page.
 
-The app can be extended to trigger actions when certain objects are detected by adding your own code to the [`Model.Classify()`](https://github.com/dusty-nv/jetson-inference/blob/3476b4896051929f764f6b806378271dc82f23f1/python/www/recognizer/model.py#L83) function:
+The app can be extended to trigger actions when certain objects are detected by adding your own code to the [`Model.Classify()`](https://github.com/vdoom/jetson-inference-jp6fixes/blob/3476b4896051929f764f6b806378271dc82f23f1/python/www/recognizer/model.py#L83) function:
 
 ``` bash
 def Classify(self, img):
@@ -85,7 +85,7 @@ def Classify(self, img):
    return self.results
 ```
 
-When modifying backend server-side Python code, remember to restart app.py for changes to take effect.  As with the previous Flask example, various [REST queries](https://github.com/dusty-nv/jetson-inference/blob/master/docs/webrtc-flask.md#rest-queries) are used for communicating dynamic settings and state changes between the client and server, which you can also add to.
+When modifying backend server-side Python code, remember to restart app.py for changes to take effect.  As with the previous Flask example, various [REST queries](https://github.com/vdoom/jetson-inference-jp6fixes/blob/master/docs/webrtc-flask.md#rest-queries) are used for communicating dynamic settings and state changes between the client and server, which you can also add to.
 
 <p align="right">Next | <b><a href="aux-streaming.md">Camera Streaming and Multimedia</a></b>
 <br/>

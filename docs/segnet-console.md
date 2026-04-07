@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="segnet-patches.md">Back</a> | <a href="../README.md#two-days-to-a-demo-digits">Next</a> | </sup><a href="../README.md#two-days-to-a-demo-digits"><sup>Contents</sup></a>
 <br/>
 <sup>Semantic Segmentation</sup></s></p>
@@ -23,7 +23,7 @@ $ ./segnet-console drone_0428.png output_0428.png \
 
 This runs the specified segmentation model on a test image downloaded with the repo.
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-aerial-tensorRT.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-aerial-tensorRT.png)
 
 In addition to the aerial model from this tutorial, the repo also includes pre-trained models on other segmentation datasets, including **[Cityscapes](https://www.cityscapes-dataset.com/)**, **[SYNTHIA](http://synthia-dataset.net/)**, and **[Pascal-VOC](http://host.robots.ox.ac.uk/pascal/VOC/)**.
 
