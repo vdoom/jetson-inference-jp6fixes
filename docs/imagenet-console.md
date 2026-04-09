@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="building-repo.md">Back</a> | <a href="imagenet-example.md">Next</a> | </sup><a href="../README.md#two-days-to-a-demo-digits"><sup>Contents</sup></a>
 <br/>
 <sup>Image Recognition</sup></p>  
@@ -54,7 +54,7 @@ $ ./imagenet-console.py --network=googlenet orange_0.jpg output_0.jpg  # --netwo
 > **note**:  the first time you run the program, TensorRT may take up to a few minutes to optimize the network. <br/>
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this optimized network file is cached to disk after the first run, so future runs will load faster.
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-orange.jpg" width="500">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-orange.jpg" width="500">
 
 #### C++
 ``` bash
@@ -66,7 +66,7 @@ $ ./imagenet-console granny_smith_1.jpg output_1.jpg
 $ ./imagenet-console.py granny_smith_1.jpg output_1.jpg
 ```
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet-apple.jpg" width="500">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet-apple.jpg" width="500">
 
 
 ### Downloading Other Classification Models

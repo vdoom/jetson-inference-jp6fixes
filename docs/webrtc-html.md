@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="webrtc-server.md">Back</a> | <a href="webrtc-flask.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>WebApp Frameworks</sup></s></p>
@@ -29,7 +29,7 @@ This first example is the simplest and highlights the core HTML/JavaScript code 
 
 ## Running the Example
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/webrtc-html.jpg" width="600">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/webrtc-html.jpg" width="600">
 
 Launching app.py will start a built-in Python webserver (which is easy to use, but isn't intended for production and can be easily changed out) along with an independent streaming thread that runs the WebRTC capture/transport and inferencing code:
 

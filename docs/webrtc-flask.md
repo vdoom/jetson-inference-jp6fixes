@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="webrtc-html.md">Back</a> | <a href="webrtc-dash.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>WebApp Frameworks</sup></s></p>
@@ -7,7 +7,7 @@
 
 [Flask](https://flask.palletsprojects.com/en/2.2.x/) is a popular Python web micro-framework that routes HTTP/HTTPS requests to user-implemented Python functions.  You can also easily handle backend REST requests with it, which can be used by the client to dynamically control properties and trigger content from the frontend based on user inputs.  This interactive DNN playground (found under [`python/www/flask`](../python/www/flask)) has multiple vision models that you can toggle simultaneously from the webapp and control their various settings with the UI in realtime:
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/webrtc-flask.jpg" width="600">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/webrtc-flask.jpg" width="600">
 
 It also uses [Bootstrap CSS](https://getbootstrap.com/) for styling of the UI components.  The main source files for this example are as follows:
 

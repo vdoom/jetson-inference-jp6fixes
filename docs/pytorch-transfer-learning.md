@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="depthnet.md">Back</a> | <a href="pytorch-cat-dog.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Transfer Learning</sup></s></p>
@@ -7,7 +7,7 @@
 
 Transfer learning is a technique for re-training a DNN model on a new dataset, which takes less time than training a network from scratch.  With transfer learning, the weights of a pre-trained model are fine-tuned to classify a customized dataset.  In these examples, we'll be using the <a href="https://arxiv.org/abs/1512.03385">ResNet-18</a> and [SSD-Mobilenet](pytorch-ssd.md) networks, although you can experiment with other networks too.
 
-<p align="center"><a href="https://arxiv.org/abs/1512.03385"><img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/pytorch-resnet-18.png" width="600"></a></p>
+<p align="center"><a href="https://arxiv.org/abs/1512.03385"><img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/pytorch-resnet-18.png" width="600"></a></p>
 
 Although training is typically performed on a PC, server, or cloud instance with discrete GPU(s) due to the often large datasets used and the associated computational demands, by using transfer learning we're able to re-train various networks onboard Jetson to get started with training and deploying our own DNN models.  
 

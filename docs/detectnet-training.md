@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="imagenet-custom.md">Back</a> | <a href="detectnet-snapshot.md">Next</a> | </sup><a href="../README.md#two-days-to-a-demo-digits"><sup>Contents</sup></a>
 <br/>
 <sup>Object Detection</sup></p> 
@@ -60,7 +60,7 @@ Included is the training data in DIGITS format for the airplane, bottle, chair, 
 
 Navigate your browser to your DIGITS server instance and choose to create a new `Detection Dataset` from the drop-down in the Datasets tab:
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-digits-new-dataset-menu.png" width="250">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-digits-new-dataset-menu.png" width="250">
 
 In the form fields, specify the following options and paths to the image and label folders under the location where you extracted the aerial dataset:
 
@@ -73,7 +73,7 @@ In the form fields, specify the following options and paths to the image and lab
 * Group Name:  `MS-COCO`
 * Dataset Name:  `coco-dog`
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-digits-new-dataset-dog.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-digits-new-dataset-dog.png)
 
 Name the dataset whatever you choose and click the `Create` button at the bottom of the page to launch the importing job.  Next we'll create the new detection model and begin training it.
 
@@ -81,7 +81,7 @@ Name the dataset whatever you choose and click the `Create` button at the bottom
 
 When the previous data import job is complete, return to the DIGITS home screen.  Select the `Models` tab and choose to create a new `Detection Model` from the drop-down:
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-digits-new-model-menu.png" width="250">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-digits-new-model-menu.png" width="250">
 
 Make the following settings in the form:
 
@@ -110,9 +110,9 @@ If you're training on a card with 12GB of memory or more, leave the `Batch Size`
 
 In the network area select the `Custom Network` tab and then copy/paste the contents of [`detectnet.prototxt`](../data/networks/detectnet.prototxt)
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-digits-custom-network.jpg)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-digits-custom-network.jpg)
 
-The DetectNet prototxt is located at [`data/networks/detectnet.prototxt`](https://github.com/dusty-nv/jetson-inference/blob/master/data/networks/detectnet.prototxt) in the repo.
+The DetectNet prototxt is located at [`data/networks/detectnet.prototxt`](https://github.com/vdoom/jetson-inference-jp6fixes/blob/master/data/networks/detectnet.prototxt) in the repo.
 
 #### Training the Model with Pretrained Googlenet
 
@@ -131,21 +131,21 @@ Select a GPU to train on and set a name and group for the model:
 
 Finally, click the `Create` button at the bottom to begin training.
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-digits-new-model-dog.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-digits-new-model-dog.png)
 
 ### Testing DetectNet Model Inference in DIGITS
 
 Leave the training job to run for a while, say 50 epochs, until the mAP (`Mean Average Precision`) plot begins to increase.  Note that due to the way mAP is calculated by the DetectNet loss function, the scale of mAP isn't necessarily 0-100, and even an mAP between 5 and 10 may indicate the model is functional.  With the size of the example COCO datasets we are using, it should take a couple hours training on a recent GPU before all 100 epochs are complete.
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-digits-model-dog.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-digits-model-dog.png)
 
 At this point, we can try testing our new model's inference on some example images in DIGITS.  On the same page as the plot above, scroll down under the `Trained Models` section.  Set the `Visualization Model` to *Bounding Boxes* and under `Test a Single Image`, select an image to try (for example, `/coco/val/images/dog/000074.png`):
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-digits-visualization-options-dog.png" width="350">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-digits-visualization-options-dog.png" width="350">
 
 Press the `Test One` button and you should see a page similar to:
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-digits-infer-dog.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-digits-infer-dog.png)
 
 Next, we will deploy our DetectNet model to Jetson and run the inference there.
 

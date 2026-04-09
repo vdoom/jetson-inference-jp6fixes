@@ -4,7 +4,8 @@
       "Bash(git submodule:*)",
       "Bash(rm -rf .git/modules/tools/camera-capture)",
       "Bash(git rm:*)",
-      "Bash(git -C C:/my_src/jetson_inference_vdoom submodule status)"
+      "Bash(git -C C:/my_src/jetson_inference_vdoom submodule status)",
+      "Bash(xargs sed:*)"
     ]
   }
 }

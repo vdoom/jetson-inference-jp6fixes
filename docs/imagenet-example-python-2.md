@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="imagenet-console-2.md">Back</a> | <a href="imagenet-example-2.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Image Classification</sup></p>  
@@ -51,9 +51,9 @@ $ mkdir my-recognition-python
 $ cd my-recognition-python
 $ touch my-recognition.py
 $ chmod +x my-recognition.py
-$ wget https://github.com/dusty-nv/jetson-inference/raw/master/data/images/black_bear.jpg 
-$ wget https://github.com/dusty-nv/jetson-inference/raw/master/data/images/brown_bear.jpg
-$ wget https://github.com/dusty-nv/jetson-inference/raw/master/data/images/polar_bear.jpg 
+$ wget https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/black_bear.jpg 
+$ wget https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/brown_bear.jpg
+$ wget https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/polar_bear.jpg 
 ```
 
 Then when you start the container, [mount the directory](aux-docker.md#mounted-data-volumes) that you just created:
@@ -192,20 +192,20 @@ Now that our Python program is complete, let's classify the test images that we 
 $ ./my-recognition.py polar_bear.jpg
 image is recognized as 'ice bear, polar bear, Ursus Maritimus, Thalarctos maritimus' (class #296) with 99.999878% confidence
 ```
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/data/images/polar_bear.jpg" width="400">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/polar_bear.jpg" width="400">
 
 ``` bash
 $ ./my-recognition.py brown_bear.jpg
 image is recognized as 'brown bear, bruin, Ursus arctos' (class #294) with 99.928925% confidence
 ```
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/data/images/brown_bear.jpg" width="400">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/brown_bear.jpg" width="400">
 
 
 ``` bash
 $ ./my-recognition.py black_bear.jpg
 image is recognized as 'American black bear, black bear, Ursus americanus, Euarctos americanus' (class #295) with 98.898628% confidence
 ```
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/data/images/black_bear.jpg" width="400">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/data/images/black_bear.jpg" width="400">
 
 You can also choose to use a [different network](imagenet-console-2.md#downloading-other-classification-models) by specifying the `--network` flag, like so:
 

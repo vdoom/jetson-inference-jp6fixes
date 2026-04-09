@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="jetpack-setup-2.md">Back</a> | <a href="building-repo-2.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>System Setup</sup></p>  
@@ -33,7 +33,7 @@ These containers use the [`l4t-pytorch`](https://ngc.nvidia.com/catalog/containe
 Due to various mounts and devices needed to run the container, it's recommended to use the [`docker/run.sh`](../docker/run.sh) script to run the container:
 
 ```bash
-$ git clone --recursive --depth=1 https://github.com/dusty-nv/jetson-inference
+$ git clone --recursive --depth=1 https://github.com/vdoom/jetson-inference-jp6fixes
 $ cd jetson-inference
 $ docker/run.sh
 ```
@@ -56,7 +56,7 @@ The container will source the ROS environment and packages when started.  For mo
 
 In addition to being supported on the Jetson ARM-based architectures, the jetson-inference container can be [built](#building-the-container) and run on x86_64 systems with NVIDIA GPU(s).  This can be used to run the Hello AI World tutorial and accompanying apps/libraries from it, or for faster training on the PC/server.  To do this, first install the [NVIDIA drivers](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#pre-requisites) and [NVIDIA Container Runtime](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/nvidia-docker.html) to enable GPU support in Docker.  
 
-To run the latest pre-built jetson-inference x86 container, use the same commands as above (`docker/run.sh`).  If you want to use a newer/older version of the [`nvcr.io/nvidia/pytorch`](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch) base container, edit [this line](https://github.com/dusty-nv/jetson-inference/blob/master/docker/tag.sh#L40) with the desired tag and then run [`docker/build.sh`](#building-the-container)
+To run the latest pre-built jetson-inference x86 container, use the same commands as above (`docker/run.sh`).  If you want to use a newer/older version of the [`nvcr.io/nvidia/pytorch`](https://catalog.ngc.nvidia.com/orgs/nvidia/containers/pytorch) base container, edit [this line](https://github.com/vdoom/jetson-inference-jp6fixes/blob/master/docker/tag.sh#L40) with the desired tag and then run [`docker/build.sh`](#building-the-container)
 
 Although the jetson-inference container is built for Linux, it can be run on Windows under WSL 2 by following the [CUDA on WSL User Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html#ch02-sub03-installing-wsl2), followed by installing Docker and the NVIDIA Container Runtime as above.  If you need to use USB webcams and V4L2 under WSL 2, you'll also need to recompile your WSL kernel with these [config changes](https://github.com/PINTO0309/wsl2_linux_kernel_usbcam_enable_conf).
 

@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="detectnet-console-2.md">Back</a> | <a href="detectnet-example-2.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Object Detection</sup></p>
@@ -49,11 +49,11 @@ $ ./detectnet.py /dev/video0 output.mp4  # save to video file
 
 Displayed in the OpenGL window are the live camera stream overlayed with the bounding boxes of the detected objects.  Note that the SSD-based models currently have the highest performance.  Here is one using the `coco-dog` model:
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-ssd-animals.jpg" width="800">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-ssd-animals.jpg" width="800">
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-ssd-kitchen.jpg" width="800">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-ssd-kitchen.jpg" width="800">
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/detectnet-ssd-laptops.jpg" width="800">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/detectnet-ssd-laptops.jpg" width="800">
 
 If the desired objects aren't being detected in the video feed or you're getting spurious detections, try decreasing or increasing the detection threshold with the `--threshold` parameter (the default is `0.5`).
 

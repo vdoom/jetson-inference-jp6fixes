@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="posenet.md">Back</a> | <a href="backgroundnet.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Action Recognition</sup></s></p>
@@ -6,7 +6,7 @@
 # Action Recognition
 Action recognition classifies the activity, behavior, or gesture occuring over a sequence of video frames.  The DNNs typically use image classification backbones with an added temporal dimension.  For example, the ResNet18-based pre-trained models use a window of 16 frames.  You can also skip frames to lengthen the window of time over which the model classifies actions.
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/actionnet-windsurfing.gif">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/actionnet-windsurfing.gif">
 
 The [`actionNet`](../c/actionNet.h) object takes in one video frame at a time, buffers them as input to the model, and outputs the class with the highest confidence.  [`actionNet`](../c/actionNet.h) can be used from [Python](https://rawgit.com/dusty-nv/jetson-inference/master/docs/html/python/jetson.inference.html#actionNet) and [C++](../c/actionNet.h).
 

@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="detectnet-camera.md">Back</a> | <a href="segnet-pretrained.md">Next</a> | </sup><a href="../README.md#two-days-to-a-demo-digits"><sup>Contents</sup></a>
 <br/>
 <sup>Semantic Segmentation</sup></s></p>
@@ -7,7 +7,7 @@
 
 The third deep learning capability we're highlighting in this tutorial is semantic segmentation.  Semantic segmentation is based on image recognition, except the classifications occur at the pixel level as opposed to classifying entire images as with image recognition.  This is accomplished by *convolutionalizing* a pre-trained image recognition model (like Alexnet), which turns it into a fully-convolutional segmentation model capable of per-pixel labelling.  Useful for environmental sensing and collision avoidance, segmentation yields dense per-pixel classification of many different potential objects per scene, including scene foregrounds and backgrounds.
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-cityscapes.jpg)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-cityscapes.jpg)
 
 The [`segNet`](../c/segNet.h) object accepts as input the 2D image, and outputs a second image with the per-pixel classification mask overlay.  Each pixel of the mask corresponds to the class of object that was classified.
 
@@ -39,7 +39,7 @@ The dataset includes various clips captured from flights of drone platforms, but
 
 First, navigate your browser to your DIGITS server instance and choose to create a new `Segmentation Dataset` from the drop-down in the Datasets tab:
 
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-digits-create-dataset.png" width="250">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-digits-create-dataset.png" width="250">
 
 In the dataset creation form, specify the following options and paths to the image and label folders under the location where you extracted the aerial dataset:
 
@@ -51,7 +51,7 @@ In the dataset creation form, specify the following options and paths to the ima
 * Feature Encoding:  `None`
 * Label Encoding:  `None`
 
-![Alt text](https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/segmentation-digits-aerial-dataset-options.png)
+![Alt text](https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/segmentation-digits-aerial-dataset-options.png)
 
 Name the dataset whatever you choose and click the `Create` button at the bottom of the page to launch the importing job.  Next we'll create the new segmentation model and begin training.
 

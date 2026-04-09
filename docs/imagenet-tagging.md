@@ -1,4 +1,4 @@
-<img src="https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/deep-vision-header.jpg" width="100%">
+<img src="https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/deep-vision-header.jpg" width="100%">
 <p align="right"><sup><a href="imagenet-camera-2.md">Back</a> | <a href="detectnet-console-2.md">Next</a> | </sup><a href="../README.md#hello-ai-world"><sup>Contents</sup></a>
 <br/>
 <sup>Image Classification</sup></p>
@@ -7,7 +7,7 @@
 
 Multi-label classification models are able to recognize multiple object classes simultaneously for performing tasks like image tagging.  The multi-label DNNs are almost identical in topology to ordinary single-class models, except they use a sigmoid activation layer as opposed to softmax.  There's a pre-trained `resnet18-tagging-voc` multi-label model available that was trained on the Pascal VOC dataset:  
 
-<img src=https://github.com/dusty-nv/jetson-inference/raw/master/docs/images/imagenet_tagging.jpg>
+<img src=https://github.com/vdoom/jetson-inference-jp6fixes/raw/master/docs/images/imagenet_tagging.jpg>
 
 To enable image tagging, you'll want to run imagenet/imagenet.py with `--topK=0` and a `--threshold` of your choosing: 
 
