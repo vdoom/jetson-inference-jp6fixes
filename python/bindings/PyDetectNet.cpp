@@ -568,6 +568,7 @@ typedef struct {
 				  "       input_blob (string) -- name of the input layer of the model.\n\n" \
 				  "       output_cvg (string) -- name of the output coverage/confidence layer.\n\n" \
 				  "       output_bbox (string) -- name of the output bounding boxes layer.\n\n" \
+				  "       model_type (string) -- detector architecture: 'ssd', 'yolov5', 'yolov11'\n\n" \
  				  DETECTNET_USAGE_STRING
 
 // Init
@@ -585,12 +586,13 @@ static int PyDetectNet_Init( PyDetectNet_Object* self, PyObject *args, PyObject 
 	const char* input_blob  = DETECTNET_DEFAULT_INPUT;
 	const char* output_cvg  = DETECTNET_DEFAULT_COVERAGE;
 	const char* output_bbox = DETECTNET_DEFAULT_BBOX;
-	
-	float threshold = DETECTNET_DEFAULT_CONFIDENCE_THRESHOLD;
-	
-	static char* kwlist[] = {"network", "argv", "threshold", "model", "labels", "colors", "input_blob", "output_cvg", "output_bbox", NULL};
+	const char* model_type  = NULL;
 
-	if( !PyArg_ParseTupleAndKeywords(args, kwds, "|sOfssssss", kwlist, &network, &argList, &threshold, &model, &labels, &colors, &input_blob, &output_cvg, &output_bbox))
+	float threshold = DETECTNET_DEFAULT_CONFIDENCE_THRESHOLD;
+
+	static char* kwlist[] = {"network", "argv", "threshold", "model", "labels", "colors", "input_blob", "output_cvg", "output_bbox", "model_type", NULL};
+
+	if( !PyArg_ParseTupleAndKeywords(args, kwds, "|sOfsssssss", kwlist, &network, &argList, &threshold, &model, &labels, &colors, &input_blob, &output_cvg, &output_bbox, &model_type))
 		return -1;
     
 	// determine whether to use argv or built-in network
@@ -639,10 +641,14 @@ static int PyDetectNet_Init( PyDetectNet_Object* self, PyObject *args, PyObject 
 	else
 	{
 		LogVerbose(LOG_PY_INFERENCE "detectNet loading custom model '%s'\n", model);
-		
+
+		// parse detector type
+		const detectNet::DetectorType detectorType = detectNet::DetectorTypeFromStr(model_type);
+
 		// load the network using custom model parameters
 		Py_BEGIN_ALLOW_THREADS
-		self->net = detectNet::Create(NULL, model != NULL ? model : network, 0.0f, labels, colors, threshold, input_blob, output_cvg, output_bbox);
+		self->net = detectNet::Create(NULL, model != NULL ? model : network, 0.0f, labels, colors, threshold, input_blob, output_cvg, output_bbox,
+								DEFAULT_MAX_BATCH_SIZE, TYPE_FASTEST, DEVICE_GPU, true, detectorType);
 		Py_END_ALLOW_THREADS
 	}	
 	

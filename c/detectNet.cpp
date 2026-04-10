@@ -49,20 +49,22 @@
 // constructor
 detectNet::detectNet( float meanPixel ) : tensorNet()
 {
-	mTracker   = NULL;
-	mMeanPixel = meanPixel;
-	mLineWidth = 2.0f;
+	mTracker       = NULL;
+	mDetectorType  = NUM_DETECTOR_TYPES;
+	mMeanPixel     = meanPixel;
+	mLineWidth     = 2.0f;
 
 	mNumClasses  = 0;
 	mClassColors = NULL;
-	
+
 	mDetectionSets = NULL;
 	mDetectionSet  = 0;
 	mMaxDetections = 0;
 	mOverlayAlpha  = DETECTNET_DEFAULT_ALPHA;
-	
+
 	mConfidenceThreshold = DETECTNET_DEFAULT_CONFIDENCE_THRESHOLD;
 	mClusteringThreshold = DETECTNET_DEFAULT_CLUSTERING_THRESHOLD;
+	mNMSThreshold        = 0.45f;
 }
 
 
@@ -76,11 +78,55 @@ detectNet::~detectNet()
 }
 
 
+// DetectorTypeFromStr
+detectNet::DetectorType detectNet::DetectorTypeFromStr( const char* str )
+{
+	if( !str )
+		return NUM_DETECTOR_TYPES;
+
+	if( strcasecmp(str, "yolov5") == 0 || strcasecmp(str, "yolo5") == 0 || strcasecmp(str, "yolo-v5") == 0 )
+		return DETECTOR_YOLOV5;
+	else if( strcasecmp(str, "yolov11") == 0 || strcasecmp(str, "yolo11") == 0 || strcasecmp(str, "yolo-v11") == 0 )
+		return DETECTOR_YOLOV11;
+	else if( strcasecmp(str, "ssd") == 0 || strcasecmp(str, "ssd-onnx") == 0 )
+		return DETECTOR_SSD_ONNX;
+	else if( strcasecmp(str, "ssd-uff") == 0 )
+		return DETECTOR_SSD_UFF;
+	else if( strcasecmp(str, "detectnet") == 0 )
+		return DETECTOR_DETECTNET;
+	else if( strcasecmp(str, "detectnet-v2") == 0 || strcasecmp(str, "detectnet_v2") == 0 )
+		return DETECTOR_DETECTNET_V2;
+
+	LogError(LOG_TRT "detectNet -- unknown detector type '%s'\n", str);
+	return NUM_DETECTOR_TYPES;
+}
+
+
+// DetectorTypeToStr
+const char* detectNet::DetectorTypeToStr( DetectorType type )
+{
+	switch(type)
+	{
+		case DETECTOR_SSD_UFF:      return "ssd-uff";
+		case DETECTOR_SSD_ONNX:     return "ssd-onnx";
+		case DETECTOR_DETECTNET:    return "detectnet";
+		case DETECTOR_DETECTNET_V2: return "detectnet-v2";
+		case DETECTOR_YOLOV5:       return "yolov5";
+		case DETECTOR_YOLOV11:      return "yolov11";
+		default:                    return "unknown";
+	}
+}
+
+
 // init
 bool detectNet::init( const char* prototxt, const char* model, const char* class_labels, const char* class_colors,
-			 	  float threshold, const char* input_blob, const char* coverage_blob, const char* bbox_blob, 
-				  uint32_t maxBatchSize, precisionType precision, deviceType device, bool allowGPUFallback )
+			 	  float threshold, const char* input_blob, const char* coverage_blob, const char* bbox_blob,
+				  uint32_t maxBatchSize, precisionType precision, deviceType device, bool allowGPUFallback,
+				  DetectorType detectorType )
 {
+	if( detectorType != NUM_DETECTOR_TYPES )
+		mDetectorType = detectorType;
+
 	LogInfo("\n");
 	LogInfo("detectNet -- loading detection network model from:\n");
 	LogInfo("          -- prototxt     %s\n", CHECK_NULL_STR(prototxt));
@@ -152,10 +198,11 @@ detectNet* detectNet::Create( const char* prototxt, const char* model, float mea
 
 
 // Create
-detectNet* detectNet::Create( const char* prototxt, const char* model, float mean_pixel, 
+detectNet* detectNet::Create( const char* prototxt, const char* model, float mean_pixel,
 						const char* class_labels, const char* class_colors, float threshold,
-						const char* input_blob, const char* coverage_blob, const char* bbox_blob, 
-						uint32_t maxBatchSize, precisionType precision, deviceType device, bool allowGPUFallback )
+						const char* input_blob, const char* coverage_blob, const char* bbox_blob,
+						uint32_t maxBatchSize, precisionType precision, deviceType device, bool allowGPUFallback,
+						DetectorType detectorType )
 {
 	// check for built-in model string
 	if( FindModel(DETECTNET_MODEL_TYPE, model) )
@@ -170,12 +217,12 @@ detectNet* detectNet::Create( const char* prototxt, const char* model, float mea
 
 	// load custom model
 	detectNet* net = new detectNet(mean_pixel);
-	
+
 	if( !net )
 		return NULL;
 
 	if( !net->init(prototxt, model, class_labels, class_colors, threshold, input_blob, coverage_blob, bbox_blob,
-				maxBatchSize, precision, device, allowGPUFallback) )
+				maxBatchSize, precision, device, allowGPUFallback, detectorType) )
 		return NULL;
 
 	return net;
@@ -340,6 +387,14 @@ detectNet* detectNet::Create( const commandLine& cmdLine )
 			threshold = DETECTNET_DEFAULT_CONFIDENCE_THRESHOLD;
 	}
 
+	// parse the detector architecture type
+	const char* model_type_str = cmdLine.GetString("model_type");
+
+	if( !model_type_str )
+		model_type_str = cmdLine.GetString("model-type");
+
+	const DetectorType detectorType = DetectorTypeFromStr(model_type_str);
+
 	// parse the model type
 	if( !FindModel(DETECTNET_MODEL_TYPE, modelName) )
 	{
@@ -350,8 +405,8 @@ detectNet* detectNet::Create( const commandLine& cmdLine )
 		const char* out_bbox     = cmdLine.GetString("output_bbox");
 		const char* class_labels = cmdLine.GetString("class_labels");
 		const char* class_colors = cmdLine.GetString("class_colors");
-		
-		if( !input ) 	
+
+		if( !input )
 			input = DETECTNET_DEFAULT_INPUT;
 
 		if( !out_blob )
@@ -365,11 +420,12 @@ detectNet* detectNet::Create( const commandLine& cmdLine )
 
 		if( !class_colors )
 			class_colors = cmdLine.GetString("colors");
-		
+
 		float meanPixel = cmdLine.GetFloat("mean_pixel");
 
-		net = detectNet::Create(prototxt, modelName, meanPixel, class_labels, class_colors, threshold, input, 
-							out_blob ? NULL : out_cvg, out_blob ? out_blob : out_bbox, maxBatchSize);
+		net = detectNet::Create(prototxt, modelName, meanPixel, class_labels, class_colors, threshold, input,
+							out_blob ? NULL : out_cvg, out_blob ? out_blob : out_bbox, maxBatchSize,
+							TYPE_FASTEST, DEVICE_GPU, true, detectorType);
 	}
 	else
 	{
@@ -387,10 +443,11 @@ detectNet* detectNet::Create( const commandLine& cmdLine )
 	// set some additional options
 	net->SetOverlayAlpha(cmdLine.GetFloat("alpha", DETECTNET_DEFAULT_ALPHA));
 	net->SetClusteringThreshold(cmdLine.GetFloat("clustering", DETECTNET_DEFAULT_CLUSTERING_THRESHOLD));
-	
+	net->SetNMSThreshold(cmdLine.GetFloat("nms_threshold", cmdLine.GetFloat("nms-threshold", 0.45f)));
+
 	// enable tracking if requested
 	net->SetTracker(objectTracker::Create(cmdLine));
-	
+
 	return net;
 }
 	
@@ -398,18 +455,63 @@ detectNet* detectNet::Create( const commandLine& cmdLine )
 // allocDetections
 bool detectNet::allocDetections()
 {
-	// determine max detections
-	if( IsModelType(MODEL_UFF) )	// TODO:  fixme
+	// infer detector type from model format if not explicitly set
+	if( mDetectorType == NUM_DETECTOR_TYPES )
+	{
+		if( IsModelType(MODEL_UFF) )         mDetectorType = DETECTOR_SSD_UFF;
+		else if( IsModelType(MODEL_ONNX) )   mDetectorType = DETECTOR_SSD_ONNX;
+		else if( IsModelType(MODEL_CAFFE) )  mDetectorType = DETECTOR_DETECTNET;
+		else if( IsModelType(MODEL_ENGINE) ) mDetectorType = DETECTOR_DETECTNET_V2;
+	}
+
+	LogInfo(LOG_TRT "detectNet -- detector type:  %s\n", DetectorTypeToStr(mDetectorType));
+
+	// determine max detections based on detector type
+	if( mDetectorType == DETECTOR_SSD_UFF )
 	{
 		LogInfo(LOG_TRT "W = %u  H = %u  C = %u\n", DIMS_W(mOutputs[OUTPUT_UFF].dims), DIMS_H(mOutputs[OUTPUT_UFF].dims), DIMS_C(mOutputs[OUTPUT_UFF].dims));
 		mMaxDetections = DIMS_H(mOutputs[OUTPUT_UFF].dims) * DIMS_C(mOutputs[OUTPUT_UFF].dims);
 	}
-	else if( IsModelType(MODEL_ONNX) )
+	else if( mDetectorType == DETECTOR_SSD_ONNX )
 	{
 		mNumClasses = DIMS_H(mOutputs[OUTPUT_CONF].dims);
-		mMaxDetections = DIMS_C(mOutputs[OUTPUT_CONF].dims) /** mNumClasses*/;
+		mMaxDetections = DIMS_C(mOutputs[OUTPUT_CONF].dims);
 		LogInfo(LOG_TRT "detectNet -- number of object classes: %u\n", mNumClasses);
-	}	
+	}
+	else if( mDetectorType == DETECTOR_YOLOV5 )
+	{
+		const uint32_t dim0 = DIMS_C(mOutputs[0].dims);
+		const uint32_t dim1 = DIMS_H(mOutputs[0].dims);
+
+		// larger dim is num_boxes, smaller is num_attributes (5 + num_classes)
+		if( dim0 > dim1 ) {
+			mMaxDetections = dim0;
+			if( mNumClasses == 0 ) mNumClasses = dim1 - 5;
+		} else {
+			mMaxDetections = dim1;
+			if( mNumClasses == 0 ) mNumClasses = dim0 - 5;
+		}
+
+		LogInfo(LOG_TRT "detectNet -- YOLOv5 output dims: %u x %u\n", dim0, dim1);
+		LogInfo(LOG_TRT "detectNet -- number of object classes: %u\n", mNumClasses);
+	}
+	else if( mDetectorType == DETECTOR_YOLOV11 )
+	{
+		const uint32_t dim0 = DIMS_C(mOutputs[0].dims);
+		const uint32_t dim1 = DIMS_H(mOutputs[0].dims);
+
+		// smaller dim is num_attributes (4 + num_classes), larger is num_boxes
+		if( dim0 < dim1 ) {
+			if( mNumClasses == 0 ) mNumClasses = dim0 - 4;
+			mMaxDetections = dim1;
+		} else {
+			if( mNumClasses == 0 ) mNumClasses = dim1 - 4;
+			mMaxDetections = dim0;
+		}
+
+		LogInfo(LOG_TRT "detectNet -- YOLOv11 output dims: %u x %u\n", dim0, dim1);
+		LogInfo(LOG_TRT "detectNet -- number of object classes: %u\n", mNumClasses);
+	}
 	else
 	{
 		mNumClasses = DIMS_C(mOutputs[OUTPUT_CVG].dims);
@@ -543,10 +645,10 @@ bool detectNet::preProcess( void* input, uint32_t width, uint32_t height, imageF
 {
 	PROFILER_BEGIN(PROFILER_PREPROCESS);
 
-	if( IsModelType(MODEL_UFF) )
+	if( mDetectorType == DETECTOR_SSD_UFF )
 	{
 		// SSD (TensorFlow / UFF)
-		if( CUDA_FAILED(cudaTensorNormBGR(input, format, width, height, 
+		if( CUDA_FAILED(cudaTensorNormBGR(input, format, width, height,
 								    mInputs[0].CUDA, GetInputWidth(), GetInputHeight(),
 								    make_float2(-1.0f, 1.0f), GetStream())) )
 		{
@@ -554,41 +656,41 @@ bool detectNet::preProcess( void* input, uint32_t width, uint32_t height, imageF
 			return false;
 		}
 	}
-	else if( IsModelType(MODEL_ONNX) )
+	else if( mDetectorType == DETECTOR_SSD_ONNX )
 	{
 		// SSD (PyTorch / ONNX)
 		if( CUDA_FAILED(cudaTensorNormMeanRGB(input, format, width, height,
-									   mInputs[0].CUDA, GetInputWidth(), GetInputHeight(), 
-									   make_float2(0.0f, 1.0f), 
+									   mInputs[0].CUDA, GetInputWidth(), GetInputHeight(),
+									   make_float2(0.0f, 1.0f),
 									   make_float3(0.5f, 0.5f, 0.5f),
-									   make_float3(0.5f, 0.5f, 0.5f), 
+									   make_float3(0.5f, 0.5f, 0.5f),
 									   GetStream())) )
 		{
 			LogError(LOG_TRT "detectNet::Detect() -- cudaTensorNormMeanRGB() failed\n");
 			return false;
 		}
 	}
-	else if( IsModelType(MODEL_CAFFE) )
+	else if( mDetectorType == DETECTOR_DETECTNET )
 	{
 		// DetectNet (Caffe)
 		if( CUDA_FAILED(cudaTensorMeanBGR(input, format, width, height,
 								    mInputs[0].CUDA, GetInputWidth(), GetInputHeight(),
-								    make_float3(mMeanPixel, mMeanPixel, mMeanPixel), 
+								    make_float3(mMeanPixel, mMeanPixel, mMeanPixel),
 								    GetStream())) )
 		{
 			LogError(LOG_TRT "detectNet::Detect() -- cudaTensorMeanBGR() failed\n");
 			return false;
 		}
 	}
-	else if( IsModelType(MODEL_ENGINE) )
+	else if( mDetectorType == DETECTOR_DETECTNET_V2 || mDetectorType == DETECTOR_YOLOV5 || mDetectorType == DETECTOR_YOLOV11 )
 	{
-		// https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tao/models/peoplenet
+		// DetectNet v2 / YOLO -- RGB normalized to [0, 1]
 		if( CUDA_FAILED(cudaTensorNormRGB(input, format, width, height,
 								    mInputs[0].CUDA, GetInputWidth(), GetInputHeight(),
-								    make_float2(0.0f, 1.0f), 
+								    make_float2(0.0f, 1.0f),
 								    GetStream())) )
 		{
-			LogError(LOG_TRT "detectNet::Detect() -- cudaTensorMeanRGB() failed\n");
+			LogError(LOG_TRT "detectNet::Detect() -- cudaTensorNormRGB() failed\n");
 			return false;
 		}
 	}
@@ -606,16 +708,16 @@ int detectNet::postProcess( void* input, uint32_t width, uint32_t height, imageF
 	// parse the bounding boxes
 	int numDetections = 0;
 
-	if( IsModelType(MODEL_UFF) )	
-		numDetections = postProcessSSD_UFF(detections, width, height);
-	else if( IsModelType(MODEL_ONNX) )
-		numDetections = postProcessSSD_ONNX(detections, width, height);
-	else if( IsModelType(MODEL_CAFFE) )
-		numDetections = postProcessDetectNet(detections, width, height);
-	else if( IsModelType(MODEL_ENGINE) )
-		numDetections = postProcessDetectNet_v2(detections, width, height);
-	else
-		return -1;
+	switch( mDetectorType )
+	{
+		case DETECTOR_SSD_UFF:       numDetections = postProcessSSD_UFF(detections, width, height); break;
+		case DETECTOR_SSD_ONNX:      numDetections = postProcessSSD_ONNX(detections, width, height); break;
+		case DETECTOR_DETECTNET:     numDetections = postProcessDetectNet(detections, width, height); break;
+		case DETECTOR_DETECTNET_V2:  numDetections = postProcessDetectNet_v2(detections, width, height); break;
+		case DETECTOR_YOLOV5:        numDetections = postProcessYOLOv5(detections, width, height); break;
+		case DETECTOR_YOLOV11:       numDetections = postProcessYOLOv11(detections, width, height); break;
+		default: return -1;
+	}
 
 	// sort the detections by area
 	sortDetections(detections, numDetections);
@@ -893,8 +995,214 @@ int detectNet::postProcessDetectNet_v2( Detection* detections, uint32_t width, u
 	
 	return numDetections;
 }
-	
-	
+
+
+// postProcessYOLOv5
+int detectNet::postProcessYOLOv5( Detection* detections, uint32_t width, uint32_t height )
+{
+	float* output = mOutputs[0].CPU;
+
+	const uint32_t dim0 = DIMS_C(mOutputs[0].dims);
+	const uint32_t dim1 = DIMS_H(mOutputs[0].dims);
+
+	// larger dim is num_boxes, smaller is num_attributes (5 + num_classes)
+	uint32_t numBoxes, numAttribs;
+	bool transposed = false;
+
+	if( dim0 > dim1 ) {
+		numBoxes   = dim0;   // e.g., 25200
+		numAttribs = dim1;   // e.g., 85
+	} else {
+		numBoxes   = dim1;
+		numAttribs = dim0;
+		transposed = true;
+	}
+
+	const uint32_t numClasses = numAttribs - 5;
+	const float scale_x = float(width) / float(GetInputWidth());
+	const float scale_y = float(height) / float(GetInputHeight());
+
+	int numDetections = 0;
+
+	for( uint32_t i = 0; i < numBoxes && numDetections < mMaxDetections; i++ )
+	{
+		float cx, cy, w, h, objectness;
+
+		if( !transposed ) {
+			const float* row = output + i * numAttribs;
+			cx = row[0]; cy = row[1]; w = row[2]; h = row[3]; objectness = row[4];
+		} else {
+			cx         = output[0 * numBoxes + i];
+			cy         = output[1 * numBoxes + i];
+			w          = output[2 * numBoxes + i];
+			h          = output[3 * numBoxes + i];
+			objectness = output[4 * numBoxes + i];
+		}
+
+		if( objectness < mConfidenceThreshold )
+			continue;
+
+		// find best class
+		uint32_t maxClass = 0;
+		float    maxScore = -1.0f;
+
+		for( uint32_t c = 0; c < numClasses; c++ )
+		{
+			const float score = transposed ? output[(5 + c) * numBoxes + i]
+			                               : output[i * numAttribs + 5 + c];
+
+			if( score > maxScore ) {
+				maxScore = score;
+				maxClass = c;
+			}
+		}
+
+		const float confidence = objectness * maxScore;
+
+		if( confidence < mConfidenceThreshold )
+			continue;
+
+		detections[numDetections].ClassID    = maxClass;
+		detections[numDetections].Confidence = confidence;
+		detections[numDetections].TrackID    = -1;
+		detections[numDetections].Left       = (cx - w * 0.5f) * scale_x;
+		detections[numDetections].Top        = (cy - h * 0.5f) * scale_y;
+		detections[numDetections].Right      = (cx + w * 0.5f) * scale_x;
+		detections[numDetections].Bottom     = (cy + h * 0.5f) * scale_y;
+
+		numDetections++;
+	}
+
+	return nmsDetections(detections, numDetections);
+}
+
+
+// postProcessYOLOv11
+int detectNet::postProcessYOLOv11( Detection* detections, uint32_t width, uint32_t height )
+{
+	float* output = mOutputs[0].CPU;
+
+	const uint32_t dim0 = DIMS_C(mOutputs[0].dims);
+	const uint32_t dim1 = DIMS_H(mOutputs[0].dims);
+
+	// smaller dim is num_attributes (4 + num_classes), larger is num_boxes
+	uint32_t numAttribs, numBoxes;
+	bool transposed = false;
+
+	if( dim0 < dim1 ) {
+		numAttribs = dim0;   // e.g., 84
+		numBoxes   = dim1;   // e.g., 8400
+		transposed = true;   // data layout: output[attr * numBoxes + box]
+	} else {
+		numAttribs = dim1;
+		numBoxes   = dim0;
+	}
+
+	const uint32_t numClasses = numAttribs - 4;
+	const float scale_x = float(width) / float(GetInputWidth());
+	const float scale_y = float(height) / float(GetInputHeight());
+
+	int numDetections = 0;
+
+	for( uint32_t i = 0; i < numBoxes && numDetections < mMaxDetections; i++ )
+	{
+		// find best class score (no objectness in YOLOv11)
+		uint32_t maxClass = 0;
+		float    maxScore = -1.0f;
+
+		for( uint32_t c = 0; c < numClasses; c++ )
+		{
+			const float score = transposed ? output[(4 + c) * numBoxes + i]
+			                               : output[i * numAttribs + 4 + c];
+
+			if( score > maxScore ) {
+				maxScore = score;
+				maxClass = c;
+			}
+		}
+
+		if( maxScore < mConfidenceThreshold )
+			continue;
+
+		float cx, cy, w, h;
+
+		if( transposed ) {
+			cx = output[0 * numBoxes + i];
+			cy = output[1 * numBoxes + i];
+			w  = output[2 * numBoxes + i];
+			h  = output[3 * numBoxes + i];
+		} else {
+			const float* row = output + i * numAttribs;
+			cx = row[0]; cy = row[1]; w = row[2]; h = row[3];
+		}
+
+		detections[numDetections].ClassID    = maxClass;
+		detections[numDetections].Confidence = maxScore;
+		detections[numDetections].TrackID    = -1;
+		detections[numDetections].Left       = (cx - w * 0.5f) * scale_x;
+		detections[numDetections].Top        = (cy - h * 0.5f) * scale_y;
+		detections[numDetections].Right      = (cx + w * 0.5f) * scale_x;
+		detections[numDetections].Bottom     = (cy + h * 0.5f) * scale_y;
+
+		numDetections++;
+	}
+
+	return nmsDetections(detections, numDetections);
+}
+
+
+// nmsDetections
+int detectNet::nmsDetections( Detection* detections, int numDetections )
+{
+	if( numDetections <= 1 )
+		return numDetections;
+
+	// sort by confidence descending
+	for( int i = 0; i < numDetections - 1; i++ )
+	{
+		for( int j = 0; j < numDetections - i - 1; j++ )
+		{
+			if( detections[j].Confidence < detections[j+1].Confidence )
+			{
+				const Detection tmp = detections[j];
+				detections[j]   = detections[j+1];
+				detections[j+1] = tmp;
+			}
+		}
+	}
+
+	// greedy NMS per class
+	std::vector<bool> suppressed(numDetections, false);
+	int finalCount = 0;
+
+	for( int i = 0; i < numDetections; i++ )
+	{
+		if( suppressed[i] )
+			continue;
+
+		if( finalCount != i )
+			detections[finalCount] = detections[i];
+
+		// suppress lower-confidence overlapping detections of the same class
+		for( int j = i + 1; j < numDetections; j++ )
+		{
+			if( suppressed[j] )
+				continue;
+
+			if( detections[i].ClassID == detections[j].ClassID &&
+			    detections[i].IOU(detections[j]) > mNMSThreshold )
+			{
+				suppressed[j] = true;
+			}
+		}
+
+		finalCount++;
+	}
+
+	return finalCount;
+}
+
+
 // clusterDetections
 int detectNet::clusterDetections( Detection* detections, int n )
 {

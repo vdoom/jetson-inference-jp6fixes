@@ -102,7 +102,9 @@
             "  --alpha=ALPHA         overlay alpha blending value, range 0-255 (default: 120)\n"					\
 		  "  --overlay=OVERLAY     detection overlay flags (e.g. --overlay=box,labels,conf)\n"					\
 		  "                        valid combinations are:  'box', 'lines', 'labels', 'conf', 'none'\n"			\
-		  "  --profile             enable layer profiling in TensorRT\n\n"				\
+		  "  --model-type=TYPE     detector architecture (ssd, detectnet, yolov5, yolov11)\n"			\
+	  "  --nms-threshold=NMS   NMS IOU threshold for YOLO models (default is 0.45)\n"			\
+	  "  --profile             enable layer profiling in TensorRT\n\n"				\
 
 
 // forward declarations
@@ -199,6 +201,30 @@ public:
 	};
 
 	/**
+	 * Detection model architecture type.
+	 */
+	enum DetectorType
+	{
+		DETECTOR_SSD_UFF = 0,      /**< SSD via TensorFlow/UFF */
+		DETECTOR_SSD_ONNX,         /**< SSD via PyTorch/ONNX */
+		DETECTOR_DETECTNET,        /**< Caffe DetectNet */
+		DETECTOR_DETECTNET_V2,     /**< TAO DetectNet v2 */
+		DETECTOR_YOLOV5,           /**< YOLOv5 */
+		DETECTOR_YOLOV11,          /**< YOLOv11 */
+		NUM_DETECTOR_TYPES
+	};
+
+	/**
+	 * Parse a string to DetectorType enum.
+	 */
+	static DetectorType DetectorTypeFromStr( const char* str );
+
+	/**
+	 * Convert a DetectorType enum to string.
+	 */
+	static const char* DetectorTypeToStr( DetectorType type );
+
+	/**
 	 * Overlay flags (can be OR'd together).
 	 */
 	enum OverlayFlags
@@ -264,16 +290,17 @@ public:
 	 * @param bboxes Name of the output bounding box layer blob, which contains a grid of rectangles in the image.
 	 * @param maxBatchSize The maximum batch size that the network will support and be optimized for.
 	 */
-	static detectNet* Create( const char* prototxt_path, const char* model_path, float mean_pixel, 
+	static detectNet* Create( const char* prototxt_path, const char* model_path, float mean_pixel,
 						 const char* class_labels, const char* class_colors,
-						 float threshold=DETECTNET_DEFAULT_CONFIDENCE_THRESHOLD, 
-						 const char* input = DETECTNET_DEFAULT_INPUT, 
-						 const char* coverage = DETECTNET_DEFAULT_COVERAGE, 
+						 float threshold=DETECTNET_DEFAULT_CONFIDENCE_THRESHOLD,
+						 const char* input = DETECTNET_DEFAULT_INPUT,
+						 const char* coverage = DETECTNET_DEFAULT_COVERAGE,
 						 const char* bboxes = DETECTNET_DEFAULT_BBOX,
-						 uint32_t maxBatchSize=DEFAULT_MAX_BATCH_SIZE, 
+						 uint32_t maxBatchSize=DEFAULT_MAX_BATCH_SIZE,
 						 precisionType precision=TYPE_FASTEST,
-				   		 deviceType device=DEVICE_GPU, bool allowGPUFallback=true );
-						 
+				   		 deviceType device=DEVICE_GPU, bool allowGPUFallback=true,
+						 DetectorType detectorType=NUM_DETECTOR_TYPES );
+
 	/**
 	 * Load a custom network instance of a UFF model
 	 * @param model_path File path to the UFF model
@@ -509,6 +536,26 @@ public:
 	 */
 	void SetOverlayAlpha( float alpha );
 
+	/**
+	 * Retrieve the detector architecture type.
+	 */
+	inline DetectorType GetDetectorType() const					{ return mDetectorType; }
+
+	/**
+	 * Set the detector architecture type.
+	 */
+	inline void SetDetectorType( DetectorType type )				{ mDetectorType = type; }
+
+	/**
+	 * Retrieve the NMS IOU threshold (used for YOLO models).
+	 */
+	inline float GetNMSThreshold() const						{ return mNMSThreshold; }
+
+	/**
+	 * Set the NMS IOU threshold (used for YOLO models).
+	 */
+	inline void SetNMSThreshold( float threshold )				{ mNMSThreshold = threshold; }
+
 protected:
 
 	// constructor
@@ -520,8 +567,9 @@ protected:
 	bool loadClassColors( const char* filename );
 	
 	bool init( const char* prototxt_path, const char* model_path, const char* class_labels, const char* class_colors,
-			 float threshold, const char* input, const char* coverage, const char* bboxes, uint32_t maxBatchSize, 
-			 precisionType precision, deviceType device, bool allowGPUFallback );
+			 float threshold, const char* input, const char* coverage, const char* bboxes, uint32_t maxBatchSize,
+			 precisionType precision, deviceType device, bool allowGPUFallback,
+			 DetectorType detectorType = NUM_DETECTOR_TYPES );
 	
 	bool preProcess( void* input, uint32_t width, uint32_t height, imageFormat format );
 	int postProcess( void* input, uint32_t width, uint32_t height, imageFormat format, Detection* detections );
@@ -530,15 +578,20 @@ protected:
 	int postProcessSSD_ONNX( Detection* detections, uint32_t width, uint32_t height );
 	int postProcessDetectNet( Detection* detections, uint32_t width, uint32_t height );
 	int postProcessDetectNet_v2( Detection* detections, uint32_t width, uint32_t height );
-	
+	int postProcessYOLOv5( Detection* detections, uint32_t width, uint32_t height );
+	int postProcessYOLOv11( Detection* detections, uint32_t width, uint32_t height );
+
 	int clusterDetections( Detection* detections, int n );
+	int nmsDetections( Detection* detections, int numDetections );
 	void sortDetections( Detection* detections, int numDetections );
 
 	objectTracker* mTracker;
-	
+	DetectorType mDetectorType;
+
 	float mConfidenceThreshold;	 // TODO change this to per-class
 	float mClusteringThreshold;	 // TODO change this to per-class
-	
+	float mNMSThreshold;
+
 	float mMeanPixel;
 	float mLineWidth;
 	float mOverlayAlpha;
