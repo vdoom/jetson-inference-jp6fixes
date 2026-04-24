@@ -20,65 +20,77 @@ unset(PYTHONLIBS_VERSION_STRING CACHE)
 
 message("-- detecting Python ${PYTHON_BINDING_VERSION}...")
 
-# --- Modern path (CMake >= 3.18): FindPython3 with Interpreter/Development/NumPy ---
-find_package(Python3 ${PYTHON_BINDING_VERSION} QUIET COMPONENTS Interpreter Development NumPy)
+# Prefer an active virtualenv if one is set
+if(DEFINED ENV{VIRTUAL_ENV})
+  set(Python3_FIND_VIRTUALENV FIRST)
+endif()
 
-if(Python3_Interpreter_FOUND AND Python3_Development_FOUND)
-  # Normalize variables so the rest of the script can remain similar
-  set(PYTHON_VERSION_MAJOR ${Python3_VERSION_MAJOR})
-  set(PYTHON_VERSION_MINOR ${Python3_VERSION_MINOR})
-  set(PYTHONLIBS_VERSION_STRING ${Python3_VERSION})
-  set(PYTHON_INCLUDE_DIRS ${Python3_INCLUDE_DIRS})
-  set(PYTHON_LIBRARIES Python3::Python)
+# Interpreter + NumPy only — do NOT require Development.
+# Extension .so modules on Linux resolve Py* symbols at dlopen time from the
+# host interpreter, so we don't need libpython at link time. This lets us
+# build against altinstalled Pythons that were configured without
+# --enable-shared (i.e. only libpython3.X.a is present).
+find_package(Python3 ${PYTHON_BINDING_VERSION} QUIET COMPONENTS Interpreter NumPy)
 
-  message("-- found Python version:  ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} (${PYTHONLIBS_VERSION_STRING})")
-  message("-- found Python include:  ${PYTHON_INCLUDE_DIRS}")
-  message("-- using Python library target:  Python3::Python")
-
-  # NumPy (modern)
-  set(NUMPY_FOUND OFF)
-  if(Python3_NumPy_FOUND)
-    set(NUMPY_FOUND ON)
-    set(NUMPY_VERSION ${Python3_NumPy_VERSION})
-    set(NUMPY_INCLUDE_DIR ${Python3_NumPy_INCLUDE_DIRS})
-    message("-- found NumPy version:  ${NUMPY_VERSION}")
-    message("-- found NumPy include:  ${NUMPY_INCLUDE_DIR}")
-    add_definitions(-DHAS_NUMPY)
-  else()
-    message("-- NumPy not found (modern path)")
-  endif()
-
-else()
-  # --- Legacy fallback (older CMake / systems) ---
+if(NOT Python3_Interpreter_FOUND)
   find_package(PythonInterp ${PYTHON_BINDING_VERSION} QUIET)
-  find_package(PythonLibs  ${PYTHON_BINDING_VERSION} QUIET)
-
-  if(NOT PYTHONLIBS_FOUND)
-    message("-- Python ${PYTHON_BINDING_VERSION} wasn't found")
+  if(NOT PYTHONINTERP_FOUND)
+    message("-- Python ${PYTHON_BINDING_VERSION} interpreter wasn't found")
     return()
   endif()
+  set(Python3_EXECUTABLE ${PYTHON_EXECUTABLE})
+  set(Python3_VERSION_MAJOR ${PYTHON_VERSION_MAJOR})
+  set(Python3_VERSION_MINOR ${PYTHON_VERSION_MINOR})
+endif()
 
-  message("-- found Python version:  ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} (${PYTHONLIBS_VERSION_STRING})")
-  message("-- found Python include:  ${PYTHON_INCLUDE_DIRS}")
-  message("-- found Python library:  ${PYTHON_LIBRARIES}")
+set(PYTHON_VERSION_MAJOR ${Python3_VERSION_MAJOR})
+set(PYTHON_VERSION_MINOR ${Python3_VERSION_MINOR})
 
-  # Extend module path to pick up your custom FindNumPy.cmake if present
-  set(CMAKE_MODULE_PATH
-      ${CMAKE_MODULE_PATH}
-      "${CMAKE_CURRENT_SOURCE_DIR}"
-      "${CMAKE_CURRENT_SOURCE_DIR}/../../utils/python/bindings"
-  )
-  message("-- CMake module path:  ${CMAKE_MODULE_PATH}")
+# Ask the selected interpreter for its own include dir and extension suffix
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c
+    "import sysconfig; print(sysconfig.get_paths()['include'])"
+  OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-  find_package(NumPy QUIET)
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c
+    "import sysconfig; print(sysconfig.get_config_var('EXT_SUFFIX') or '.so')"
+  OUTPUT_VARIABLE PYTHON_EXT_SUFFIX
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-  if(NUMPY_FOUND)
-    message("-- found NumPy version:  ${NUMPY_VERSION}")
-    message("-- found NumPy include:  ${NUMPY_INCLUDE_DIR}")
-    add_definitions(-DHAS_NUMPY)
-  else()
-    message("-- NumPy not found (legacy path)")
+message("-- found Python version:  ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
+message("-- found Python interp:   ${Python3_EXECUTABLE}")
+message("-- found Python include:  ${PYTHON_INCLUDE_DIR}")
+message("-- Python ext suffix:     ${PYTHON_EXT_SUFFIX}")
+
+# NumPy
+set(NUMPY_FOUND OFF)
+if(Python3_NumPy_FOUND)
+  set(NUMPY_FOUND ON)
+  set(NUMPY_VERSION ${Python3_NumPy_VERSION})
+  set(NUMPY_INCLUDE_DIR ${Python3_NumPy_INCLUDE_DIRS})
+else()
+  execute_process(
+    COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
+    OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE _NUMPY_RC)
+  if(_NUMPY_RC EQUAL 0 AND NUMPY_INCLUDE_DIR)
+    set(NUMPY_FOUND ON)
+    execute_process(
+      COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.__version__)"
+      OUTPUT_VARIABLE NUMPY_VERSION
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
+endif()
+
+if(NUMPY_FOUND)
+  message("-- found NumPy version:   ${NUMPY_VERSION}")
+  message("-- found NumPy include:   ${NUMPY_INCLUDE_DIR}")
+  add_definitions(-DHAS_NUMPY)
+else()
+  message("-- NumPy not found")
 endif()
 
 # --- Sources & target ---
@@ -88,20 +100,17 @@ set(_PYMOD jetson-inference-python-${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR
 set(CUDA_LINK_LIBRARIES_KEYWORD PRIVATE)
 cuda_add_library(${_PYMOD} SHARED ${pythonExtSources})
 
-# Per-target includes and links (avoid global include/link directories)
-target_include_directories(${_PYMOD} PRIVATE ${PYTHON_INCLUDE_DIRS})
+# Headers only — do NOT link libpython.
+target_include_directories(${_PYMOD} PRIVATE ${PYTHON_INCLUDE_DIR})
 target_link_libraries(${_PYMOD}
   PRIVATE
     jetson-inference
-    ${PYTHON_LIBRARIES}
     jetson-utils-python-${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}
 )
 
-# Add NumPy include directories if available
 if(NUMPY_FOUND)
   target_include_directories(${_PYMOD} PRIVATE ${NUMPY_INCLUDE_DIR})
 
-  # Only for NumPy < 2.0: attempt to link npymath if it exists
   if(DEFINED NUMPY_VERSION AND NUMPY_VERSION VERSION_LESS "2.0")
     find_library(NPYMATH_LIB NAMES npymath)
     if(NPYMATH_LIB)
@@ -122,11 +131,18 @@ set_target_properties(${_PYMOD}
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}"
 )
 
-# --- Install paths (x86_64 vs Jetson) ---
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-  set(PYTHON_BINDING_INSTALL_DIR /opt/conda/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages)
-else()
-  set(PYTHON_BINDING_INSTALL_DIR /usr/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/dist-packages)
+# --- Install paths ---
+# Honor an explicit -DPYTHON_BINDING_INSTALL_DIR=..., otherwise an active venv,
+# otherwise fall back to the historical system paths.
+if(NOT DEFINED PYTHON_BINDING_INSTALL_DIR OR PYTHON_BINDING_INSTALL_DIR STREQUAL "")
+  if(DEFINED ENV{VIRTUAL_ENV})
+    set(PYTHON_BINDING_INSTALL_DIR "$ENV{VIRTUAL_ENV}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages")
+    message("-- installing Python bindings into active venv: ${PYTHON_BINDING_INSTALL_DIR}")
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+    set(PYTHON_BINDING_INSTALL_DIR /opt/conda/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages)
+  else()
+    set(PYTHON_BINDING_INSTALL_DIR /usr/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/dist-packages)
+  endif()
 endif()
 
 install(TARGETS ${_PYMOD} DESTINATION ${PYTHON_BINDING_INSTALL_DIR})
