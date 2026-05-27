@@ -28,6 +28,7 @@
 #include "cudaMappedMemory.h"
 #include "cudaFont.h"
 #include "cudaDraw.h"
+#include "cudaCrop.h"
 
 #include "commandLine.h"
 #include "filesystem.h"
@@ -65,6 +66,11 @@ detectNet::detectNet( float meanPixel ) : tensorNet()
 	mConfidenceThreshold = DETECTNET_DEFAULT_CONFIDENCE_THRESHOLD;
 	mClusteringThreshold = DETECTNET_DEFAULT_CLUSTERING_THRESHOLD;
 	mNMSThreshold        = 0.45f;
+
+	mTileSize       = 0;
+	mTileOverlap    = 0.2f;
+	mTileScratch    = NULL;
+	mTileScratchCap = 0;
 }
 
 
@@ -72,9 +78,10 @@ detectNet::detectNet( float meanPixel ) : tensorNet()
 detectNet::~detectNet()
 {
 	SAFE_DELETE(mTracker);
-	
+
 	CUDA_FREE_HOST(mDetectionSets);
 	CUDA_FREE_HOST(mClassColors);
+	CUDA_FREE_HOST(mTileScratch);
 }
 
 
@@ -445,6 +452,10 @@ detectNet* detectNet::Create( const commandLine& cmdLine )
 	net->SetClusteringThreshold(cmdLine.GetFloat("clustering", DETECTNET_DEFAULT_CLUSTERING_THRESHOLD));
 	net->SetNMSThreshold(cmdLine.GetFloat("nms_threshold", cmdLine.GetFloat("nms-threshold", 0.45f)));
 
+	// optional SAHI-style tiling (YOLOv5/YOLOv11 only)
+	net->SetTileSize(cmdLine.GetInt("tile_size", cmdLine.GetInt("tile-size", 0)));
+	net->SetTileOverlap(cmdLine.GetFloat("tile_overlap", cmdLine.GetFloat("tile-overlap", 0.2f)));
+
 	// enable tracking if requested
 	net->SetTracker(objectTracker::Create(cmdLine));
 
@@ -597,33 +608,49 @@ int detectNet::Detect( void* input, uint32_t width, uint32_t height, imageFormat
 		LogError(LOG_TRT "detectNet::Detect( 0x%p, %u, %u ) -> invalid parameters\n", input, width, height);
 		return -1;
 	}
-	
+
 	if( !imageFormatIsRGB(format) )
 	{
 		LogError(LOG_TRT "detectNet::Detect() -- unsupported image format (%s)\n", imageFormatToStr(format));
 		LogError(LOG_TRT "                       supported formats are:\n");
-		LogError(LOG_TRT "                          * rgb8\n");		
-		LogError(LOG_TRT "                          * rgba8\n");		
-		LogError(LOG_TRT "                          * rgb32f\n");		
+		LogError(LOG_TRT "                          * rgb8\n");
+		LogError(LOG_TRT "                          * rgba8\n");
+		LogError(LOG_TRT "                          * rgb32f\n");
 		LogError(LOG_TRT "                          * rgba32f\n");
 
 		return false;
 	}
-	
-	// apply input pre-processing
-	if( !preProcess(input, width, height, format) )
-		return -1;
-	
-	// process model with TensorRT 
-	PROFILER_BEGIN(PROFILER_NETWORK);
 
-	if( !ProcessNetwork() )
-		return -1;
-	
-	PROFILER_END(PROFILER_NETWORK);
-	
-	// post-processing / clustering
-	const int numDetections = postProcess(input, width, height, format, detections);
+	int numDetections = 0;
+
+	if( mTileSize > 0 && tilingSupported() )
+	{
+		numDetections = detectTiled(input, width, height, format, detections);
+
+		if( numDetections < 0 )
+			return -1;
+	}
+	else
+	{
+		if( mTileSize > 0 )
+			LogWarning(LOG_TRT "detectNet::Detect() -- tiling requested but detector type '%s' is unsupported; falling back to single-pass\n",
+			           DetectorTypeToStr(mDetectorType));
+
+		// apply input pre-processing
+		if( !preProcess(input, width, height, format) )
+			return -1;
+
+		// process model with TensorRT
+		PROFILER_BEGIN(PROFILER_NETWORK);
+
+		if( !ProcessNetwork() )
+			return -1;
+
+		PROFILER_END(PROFILER_NETWORK);
+
+		// post-processing / clustering
+		numDetections = postProcess(input, width, height, format, detections);
+	}
 
 	// render the overlay
 	if( overlay != 0 && numDetections > 0 )
@@ -631,12 +658,238 @@ int detectNet::Detect( void* input, uint32_t width, uint32_t height, imageFormat
 		if( !Overlay(input, input, width, height, format, detections, numDetections, overlay) )
 			LogError(LOG_TRT "detectNet::Detect() -- failed to render overlay\n");
 	}
-	
-	// wait for GPU to complete work			
+
+	// wait for GPU to complete work
 	//CUDA(cudaDeviceSynchronize());	// BUG is this needed here?
 
 	// return the number of detections
 	return numDetections;
+}
+
+
+// tilingSupported -- only YOLO detectors share the parse+nms split that tiling needs.
+bool detectNet::tilingSupported() const
+{
+	return mDetectorType == DETECTOR_YOLOV5 || mDetectorType == DETECTOR_YOLOV11;
+}
+
+
+// computeTileROIs -- SAHI-style sliding grid; last tile in each axis is snapped
+//                    to the image edge so we never read out-of-bounds.
+void detectNet::computeTileROIs( uint32_t imgWidth, uint32_t imgHeight, std::vector<int4>& rois ) const
+{
+	rois.clear();
+
+	if( mTileSize == 0 )
+		return;
+
+	const uint32_t tileW = (mTileSize > imgWidth)  ? imgWidth  : mTileSize;
+	const uint32_t tileH = (mTileSize > imgHeight) ? imgHeight : mTileSize;
+
+	const float overlap = mTileOverlap;
+	const float strideXf = (float)tileW * (1.0f - overlap);
+	const float strideYf = (float)tileH * (1.0f - overlap);
+	const uint32_t strideX = (uint32_t)(strideXf < 1.0f ? 1.0f : strideXf);
+	const uint32_t strideY = (uint32_t)(strideYf < 1.0f ? 1.0f : strideYf);
+
+	std::vector<uint32_t> xs;
+	std::vector<uint32_t> ys;
+
+	if( tileW >= imgWidth ) {
+		xs.push_back(0);
+	} else {
+		for( uint32_t x = 0; x + tileW < imgWidth; x += strideX )
+			xs.push_back(x);
+		xs.push_back(imgWidth - tileW);
+	}
+
+	if( tileH >= imgHeight ) {
+		ys.push_back(0);
+	} else {
+		for( uint32_t y = 0; y + tileH < imgHeight; y += strideY )
+			ys.push_back(y);
+		ys.push_back(imgHeight - tileH);
+	}
+
+	for( size_t yi = 0; yi < ys.size(); yi++ )
+	{
+		for( size_t xi = 0; xi < xs.size(); xi++ )
+		{
+			int4 roi;
+			roi.x = (int)xs[xi];
+			roi.y = (int)ys[yi];
+			roi.z = (int)(xs[xi] + tileW);
+			roi.w = (int)(ys[yi] + tileH);
+			rois.push_back(roi);
+		}
+	}
+}
+
+
+// ensureTileScratch -- allocate (or grow) the per-tile scratch buffer.
+bool detectNet::ensureTileScratch( uint32_t tileWidth, uint32_t tileHeight, imageFormat format )
+{
+	const size_t required = imageFormatSize(format, tileWidth, tileHeight);
+
+	if( mTileScratch != NULL && mTileScratchCap >= required )
+		return true;
+
+	CUDA_FREE_HOST(mTileScratch);
+	mTileScratch = NULL;
+	mTileScratchCap = 0;
+
+	if( !cudaAllocMapped(&mTileScratch, required) )
+	{
+		LogError(LOG_TRT "detectNet::ensureTileScratch() -- failed to allocate %zu bytes for tile scratch buffer\n", required);
+		return false;
+	}
+
+	mTileScratchCap = required;
+	return true;
+}
+
+
+// detectTiled -- SAHI-style tiled inference path for YOLO detectors.
+//
+// Timing note: PROFILER_BEGIN/END would overwrite mProfilerTimes[query] on
+// every call rather than accumulate, so calling them inside the per-tile loop
+// would leave GetNetworkFPS() reporting only the LAST tile's network time --
+// making FPS look much higher than the real per-frame rate. Instead we
+// measure the whole tiled pass with CPU wall-clock and write the totals into
+// the profiler directly. Per-phase split is approximated by attributing each
+// tile's CPU-measured pre/net/post intervals; ProcessNetwork(sync=true)
+// implicitly synchronizes the stream so these intervals are meaningful.
+int detectNet::detectTiled( void* input, uint32_t width, uint32_t height, imageFormat format, Detection* detections )
+{
+	std::vector<int4> rois;
+	computeTileROIs(width, height, rois);
+
+	if( rois.empty() )
+		return 0;
+
+	std::vector<Detection> accumulator;
+	accumulator.reserve(rois.size() * 32);  // rough hint; grows on demand
+
+	std::vector<Detection> tileBuf(mMaxDetections);
+
+	float accumPreMS  = 0.0f;
+	float accumNetMS  = 0.0f;
+	float accumPostMS = 0.0f;
+
+	for( size_t t = 0; t < rois.size(); t++ )
+	{
+		const int4& roi = rois[t];
+		const uint32_t tileW = (uint32_t)(roi.z - roi.x);
+		const uint32_t tileH = (uint32_t)(roi.w - roi.y);
+
+		if( !ensureTileScratch(tileW, tileH, format) )
+			return -1;
+
+		timespec tPreStart;
+		timestamp(&tPreStart);
+
+		if( CUDA_FAILED(cudaCrop(input, mTileScratch, roi, width, height, format, GetStream())) )
+		{
+			LogError(LOG_TRT "detectNet::detectTiled() -- cudaCrop() failed for tile %zu\n", t);
+			return -1;
+		}
+
+		if( CUDA_FAILED(cudaTensorNormRGB(mTileScratch, format, tileW, tileH,
+		                                  mInputs[0].CUDA, GetInputWidth(), GetInputHeight(),
+		                                  make_float2(0.0f, 1.0f),
+		                                  GetStream())) )
+		{
+			LogError(LOG_TRT "detectNet::detectTiled() -- cudaTensorNormRGB() failed for tile %zu\n", t);
+			return -1;
+		}
+
+		timespec tNetStart;
+		timestamp(&tNetStart);
+
+		if( !ProcessNetwork() )
+			return -1;
+
+		timespec tParseStart;
+		timestamp(&tParseStart);
+
+		int n = 0;
+
+		if( mDetectorType == DETECTOR_YOLOV5 )
+			n = parseYOLOv5(tileBuf.data(), mMaxDetections, tileW, tileH);
+		else if( mDetectorType == DETECTOR_YOLOV11 )
+			n = parseYOLOv11(tileBuf.data(), mMaxDetections, tileW, tileH);
+
+		for( int i = 0; i < n; i++ )
+		{
+			tileBuf[i].Left   += (float)roi.x;
+			tileBuf[i].Right  += (float)roi.x;
+			tileBuf[i].Top    += (float)roi.y;
+			tileBuf[i].Bottom += (float)roi.y;
+			accumulator.push_back(tileBuf[i]);
+		}
+
+		timespec tTileEnd;
+		timestamp(&tTileEnd);
+
+		timespec d;
+		timeDiff(tPreStart,   tNetStart,   &d); accumPreMS  += timeFloat(d);
+		timeDiff(tNetStart,   tParseStart, &d); accumNetMS  += timeFloat(d);
+		timeDiff(tParseStart, tTileEnd,    &d); accumPostMS += timeFloat(d);
+	}
+
+	timespec tFinalStart;
+	timestamp(&tFinalStart);
+
+	// global NMS across all tiles (handles overlap-region duplicates)
+	int total = (int)accumulator.size();
+
+	if( total > 0 )
+		total = nmsDetections(accumulator.data(), total);
+
+	// sort by area, clamp, and copy survivors into caller buffer (bounded by mMaxDetections)
+	if( total > (int)mMaxDetections )
+		total = (int)mMaxDetections;
+
+	for( int i = 0; i < total; i++ )
+		detections[i] = accumulator[i];
+
+	sortDetections(detections, total);
+
+	for( int i = 0; i < total; i++ )
+	{
+		if( detections[i].Top    < 0 ) detections[i].Top    = 0;
+		if( detections[i].Left   < 0 ) detections[i].Left   = 0;
+		if( detections[i].Right  >= (float)width  ) detections[i].Right  = (float)(width  - 1);
+		if( detections[i].Bottom >= (float)height ) detections[i].Bottom = (float)(height - 1);
+	}
+
+	timespec frameEnd;
+	timestamp(&frameEnd);
+
+	timespec d;
+	timeDiff(tFinalStart, frameEnd, &d);
+	accumPostMS += timeFloat(d);
+
+	// publish wall-clock totals into the profiler so GetNetworkFPS()
+	// reflects real per-frame throughput rather than the last tile alone
+	mProfilerTimes[PROFILER_PREPROCESS].x  = accumPreMS;
+	mProfilerTimes[PROFILER_PREPROCESS].y  = accumPreMS;
+	mProfilerTimes[PROFILER_NETWORK].x     = accumNetMS;
+	mProfilerTimes[PROFILER_NETWORK].y     = accumNetMS;
+	mProfilerTimes[PROFILER_POSTPROCESS].x = accumPostMS;
+	mProfilerTimes[PROFILER_POSTPROCESS].y = accumPostMS;
+
+	const uint32_t flags = (1u << PROFILER_PREPROCESS)
+	                     | (1u << PROFILER_NETWORK)
+	                     | (1u << PROFILER_POSTPROCESS);
+	mProfilerQueriesUsed |= flags;
+	mProfilerQueriesDone |= flags;
+
+	// optional tracker (not counted in per-frame profiler)
+	if( mTracker != NULL && mTracker->IsEnabled() )
+		total = mTracker->Process(input, width, height, format, detections, total);
+
+	return total;
 }
 
 
@@ -997,8 +1250,11 @@ int detectNet::postProcessDetectNet_v2( Detection* detections, uint32_t width, u
 }
 
 
-// postProcessYOLOv5
-int detectNet::postProcessYOLOv5( Detection* detections, uint32_t width, uint32_t height )
+// parseYOLOv5 -- parse raw model output into image-space detections, no NMS.
+//                Coordinates are scaled assuming the network was fed an image of
+//                size (width, height) (i.e. the tile dimensions when tiling, or
+//                the full image dimensions in the single-pass case).
+int detectNet::parseYOLOv5( Detection* out, uint32_t maxOut, uint32_t width, uint32_t height )
 {
 	float* output = mOutputs[0].CPU;
 
@@ -1024,7 +1280,7 @@ int detectNet::postProcessYOLOv5( Detection* detections, uint32_t width, uint32_
 
 	int numDetections = 0;
 
-	for( uint32_t i = 0; i < numBoxes && numDetections < mMaxDetections; i++ )
+	for( uint32_t i = 0; i < numBoxes && (uint32_t)numDetections < maxOut; i++ )
 	{
 		float cx, cy, w, h, objectness;
 
@@ -1062,23 +1318,31 @@ int detectNet::postProcessYOLOv5( Detection* detections, uint32_t width, uint32_
 		if( confidence < mConfidenceThreshold )
 			continue;
 
-		detections[numDetections].ClassID    = maxClass;
-		detections[numDetections].Confidence = confidence;
-		detections[numDetections].TrackID    = -1;
-		detections[numDetections].Left       = (cx - w * 0.5f) * scale_x;
-		detections[numDetections].Top        = (cy - h * 0.5f) * scale_y;
-		detections[numDetections].Right      = (cx + w * 0.5f) * scale_x;
-		detections[numDetections].Bottom     = (cy + h * 0.5f) * scale_y;
+		out[numDetections].ClassID    = maxClass;
+		out[numDetections].Confidence = confidence;
+		out[numDetections].TrackID    = -1;
+		out[numDetections].Left       = (cx - w * 0.5f) * scale_x;
+		out[numDetections].Top        = (cy - h * 0.5f) * scale_y;
+		out[numDetections].Right      = (cx + w * 0.5f) * scale_x;
+		out[numDetections].Bottom     = (cy + h * 0.5f) * scale_y;
 
 		numDetections++;
 	}
 
-	return nmsDetections(detections, numDetections);
+	return numDetections;
 }
 
 
-// postProcessYOLOv11
-int detectNet::postProcessYOLOv11( Detection* detections, uint32_t width, uint32_t height )
+// postProcessYOLOv5
+int detectNet::postProcessYOLOv5( Detection* detections, uint32_t width, uint32_t height )
+{
+	const int n = parseYOLOv5(detections, mMaxDetections, width, height);
+	return nmsDetections(detections, n);
+}
+
+
+// parseYOLOv11 -- see parseYOLOv5 comment; YOLOv11 has no objectness term.
+int detectNet::parseYOLOv11( Detection* out, uint32_t maxOut, uint32_t width, uint32_t height )
 {
 	float* output = mOutputs[0].CPU;
 
@@ -1104,7 +1368,7 @@ int detectNet::postProcessYOLOv11( Detection* detections, uint32_t width, uint32
 
 	int numDetections = 0;
 
-	for( uint32_t i = 0; i < numBoxes && numDetections < mMaxDetections; i++ )
+	for( uint32_t i = 0; i < numBoxes && (uint32_t)numDetections < maxOut; i++ )
 	{
 		// find best class score (no objectness in YOLOv11)
 		uint32_t maxClass = 0;
@@ -1136,18 +1400,26 @@ int detectNet::postProcessYOLOv11( Detection* detections, uint32_t width, uint32
 			cx = row[0]; cy = row[1]; w = row[2]; h = row[3];
 		}
 
-		detections[numDetections].ClassID    = maxClass;
-		detections[numDetections].Confidence = maxScore;
-		detections[numDetections].TrackID    = -1;
-		detections[numDetections].Left       = (cx - w * 0.5f) * scale_x;
-		detections[numDetections].Top        = (cy - h * 0.5f) * scale_y;
-		detections[numDetections].Right      = (cx + w * 0.5f) * scale_x;
-		detections[numDetections].Bottom     = (cy + h * 0.5f) * scale_y;
+		out[numDetections].ClassID    = maxClass;
+		out[numDetections].Confidence = maxScore;
+		out[numDetections].TrackID    = -1;
+		out[numDetections].Left       = (cx - w * 0.5f) * scale_x;
+		out[numDetections].Top        = (cy - h * 0.5f) * scale_y;
+		out[numDetections].Right      = (cx + w * 0.5f) * scale_x;
+		out[numDetections].Bottom     = (cy + h * 0.5f) * scale_y;
 
 		numDetections++;
 	}
 
-	return nmsDetections(detections, numDetections);
+	return numDetections;
+}
+
+
+// postProcessYOLOv11
+int detectNet::postProcessYOLOv11( Detection* detections, uint32_t width, uint32_t height )
+{
+	const int n = parseYOLOv11(detections, mMaxDetections, width, height);
+	return nmsDetections(detections, n);
 }
 
 

@@ -928,6 +928,94 @@ PyObject* PyDetectNet_SetClusteringThreshold( PyDetectNet_Object* self, PyObject
 }
 
 
+#define DOC_GET_TILE_SIZE  "Return the SAHI tile size in pixels (0 = tiling disabled).\n\n" \
+                           "Parameters:  (none)\n\n" \
+                           "Returns:\n" \
+                           "  (int) -- the tile side length in pixels"
+
+// GetTileSize
+static PyObject* PyDetectNet_GetTileSize( PyDetectNet_Object* self )
+{
+	if( !self || !self->net )
+	{
+		PyErr_SetString(PyExc_Exception, LOG_PY_INFERENCE "detectNet invalid object instance");
+		return NULL;
+	}
+
+	return PYLONG_FROM_UNSIGNED_LONG(self->net->GetTileSize());
+}
+
+
+#define DOC_SET_TILE_SIZE  "Set the SAHI tile size in pixels (0 disables tiling).\n\n" \
+                           "Only takes effect for YOLOv5/YOLOv11 detectors.\n\n" \
+                           "Parameters:\n" \
+                           "  (int) -- the tile side length in pixels\n\n" \
+                           "Returns:  (none)"
+
+// SetTileSize
+PyObject* PyDetectNet_SetTileSize( PyDetectNet_Object* self, PyObject* args )
+{
+	if( !self || !self->net )
+	{
+		PyErr_SetString(PyExc_Exception, LOG_PY_INFERENCE "detectNet invalid object instance");
+		return NULL;
+	}
+
+	int size = 0;
+
+	if( !PyArg_ParseTuple(args, "i", &size) )
+		return NULL;
+
+	if( size < 0 )
+		size = 0;
+
+	self->net->SetTileSize((uint32_t)size);
+	Py_RETURN_NONE;
+}
+
+
+#define DOC_GET_TILE_OVERLAP  "Return the SAHI tile overlap fraction (0.0-0.9).\n\n" \
+                              "Parameters:  (none)\n\n" \
+                              "Returns:\n" \
+                              "  (float) -- the fractional overlap between adjacent tiles"
+
+// GetTileOverlap
+static PyObject* PyDetectNet_GetTileOverlap( PyDetectNet_Object* self )
+{
+	if( !self || !self->net )
+	{
+		PyErr_SetString(PyExc_Exception, LOG_PY_INFERENCE "detectNet invalid object instance");
+		return NULL;
+	}
+
+	return PyFloat_FromDouble(self->net->GetTileOverlap());
+}
+
+
+#define DOC_SET_TILE_OVERLAP  "Set the fractional overlap between SAHI tiles (range 0.0-0.9).\n\n" \
+                              "Parameters:\n" \
+                              "  (float) -- the fractional overlap between adjacent tiles\n\n" \
+                              "Returns:  (none)"
+
+// SetTileOverlap
+PyObject* PyDetectNet_SetTileOverlap( PyDetectNet_Object* self, PyObject* args )
+{
+	if( !self || !self->net )
+	{
+		PyErr_SetString(PyExc_Exception, LOG_PY_INFERENCE "detectNet invalid object instance");
+		return NULL;
+	}
+
+	float overlap = 0.0f;
+
+	if( !PyArg_ParseTuple(args, "f", &overlap) )
+		return NULL;
+
+	self->net->SetTileOverlap(overlap);
+	Py_RETURN_NONE;
+}
+
+
 #define DOC_GET_NUM_CLASSES "Return the number of object classes that this network model is able to detect.\n\n" \
 				 	   "Parameters:  (none)\n\n" \
 					   "Returns:\n" \
@@ -1347,6 +1435,10 @@ static PyMethodDef pyDetectNet_Methods[] =
 	{ "SetConfidenceThreshold", (PyCFunction)PyDetectNet_SetConfidenceThreshold, METH_VARARGS, DOC_SET_CONFIDENCE_THRESHOLD}, 
 	{ "GetClusteringThreshold", (PyCFunction)PyDetectNet_GetClusteringThreshold, METH_NOARGS, DOC_GET_CLUSTERING_THRESHOLD},
 	{ "SetClusteringThreshold", (PyCFunction)PyDetectNet_SetClusteringThreshold, METH_VARARGS, DOC_SET_CLUSTERING_THRESHOLD},
+	{ "GetTileSize", (PyCFunction)PyDetectNet_GetTileSize, METH_NOARGS, DOC_GET_TILE_SIZE},
+	{ "SetTileSize", (PyCFunction)PyDetectNet_SetTileSize, METH_VARARGS, DOC_SET_TILE_SIZE},
+	{ "GetTileOverlap", (PyCFunction)PyDetectNet_GetTileOverlap, METH_NOARGS, DOC_GET_TILE_OVERLAP},
+	{ "SetTileOverlap", (PyCFunction)PyDetectNet_SetTileOverlap, METH_VARARGS, DOC_SET_TILE_OVERLAP},
 	{ "GetTrackerType", (PyCFunction)PyDetectNet_GetTrackerType, METH_NOARGS, DOC_GET_TRACKER_TYPE},
 	{ "SetTrackerType", (PyCFunction)PyDetectNet_SetTrackerType, METH_VARARGS, DOC_SET_TRACKER_TYPE},
 	{ "IsTrackingEnabled", (PyCFunction)PyDetectNet_IsTrackingEnabled, METH_NOARGS, DOC_IS_TRACKING_ENABLED},

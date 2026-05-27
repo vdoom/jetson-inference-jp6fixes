@@ -104,6 +104,9 @@
 		  "                        valid combinations are:  'box', 'lines', 'labels', 'conf', 'none'\n"			\
 		  "  --model-type=TYPE     detector architecture (ssd, detectnet, yolov5, yolov11)\n"			\
 	  "  --nms-threshold=NMS   NMS IOU threshold for YOLO models (default is 0.45)\n"			\
+	  "  --tile-size=N         enable SAHI-style tiled inference with N x N tiles\n"			\
+	  "                        (YOLOv5/YOLOv11 only; 0 = disabled, default)\n"				\
+	  "  --tile-overlap=F      fractional overlap between tiles, range 0.0-0.9 (default is 0.2)\n"	\
 	  "  --profile             enable layer profiling in TensorRT\n\n"				\
 
 
@@ -556,6 +559,33 @@ public:
 	 */
 	inline void SetNMSThreshold( float threshold )				{ mNMSThreshold = threshold; }
 
+	/**
+	 * Retrieve the SAHI tile size in pixels (0 = tiling disabled).
+	 */
+	inline uint32_t GetTileSize() const							{ return mTileSize; }
+
+	/**
+	 * Set the SAHI tile size in pixels (0 disables tiling).
+	 * Only takes effect for YOLOv5/YOLOv11 detectors.
+	 */
+	inline void SetTileSize( uint32_t size )					{ mTileSize = size; }
+
+	/**
+	 * Retrieve the fractional overlap between SAHI tiles (range 0.0-0.9).
+	 */
+	inline float GetTileOverlap() const							{ return mTileOverlap; }
+
+	/**
+	 * Set the fractional overlap between SAHI tiles.
+	 * Values are clamped to the range 0.0-0.9.
+	 */
+	inline void SetTileOverlap( float overlap )
+	{
+		if( overlap < 0.0f ) overlap = 0.0f;
+		if( overlap > 0.9f ) overlap = 0.9f;
+		mTileOverlap = overlap;
+	}
+
 protected:
 
 	// constructor
@@ -581,9 +611,17 @@ protected:
 	int postProcessYOLOv5( Detection* detections, uint32_t width, uint32_t height );
 	int postProcessYOLOv11( Detection* detections, uint32_t width, uint32_t height );
 
+	int parseYOLOv5( Detection* out, uint32_t maxOut, uint32_t width, uint32_t height );
+	int parseYOLOv11( Detection* out, uint32_t maxOut, uint32_t width, uint32_t height );
+
 	int clusterDetections( Detection* detections, int n );
 	int nmsDetections( Detection* detections, int numDetections );
 	void sortDetections( Detection* detections, int numDetections );
+
+	bool tilingSupported() const;
+	void computeTileROIs( uint32_t imgWidth, uint32_t imgHeight, std::vector<int4>& rois ) const;
+	bool ensureTileScratch( uint32_t tileWidth, uint32_t tileHeight, imageFormat format );
+	int detectTiled( void* input, uint32_t width, uint32_t height, imageFormat format, Detection* detections );
 
 	objectTracker* mTracker;
 	DetectorType mDetectorType;
@@ -607,6 +645,11 @@ protected:
 	Detection* mDetectionSets;	// list of detections, mNumDetectionSets * mMaxDetections
 	uint32_t   mDetectionSet;	// index of next detection set to use
 	uint32_t	 mMaxDetections;	// number of raw detections in the grid
+
+	uint32_t   mTileSize;        // SAHI tile side in pixels (0 = disabled)
+	float      mTileOverlap;     // fractional overlap between tiles, 0.0-0.9
+	void*      mTileScratch;     // CUDA buffer holding the current cropped tile
+	size_t     mTileScratchCap;  // allocated size of mTileScratch in bytes
 
 	static const uint32_t mNumDetectionSets = 16; // size of detection ringbuffer
 };
