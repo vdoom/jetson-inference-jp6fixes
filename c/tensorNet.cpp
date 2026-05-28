@@ -1210,13 +1210,14 @@ bool tensorNet::LoadNetwork( const char* prototxt_path_, const char* model_path_
 	}
 	else if( model_fmt == MODEL_ENGINE )
 	{
+		mModelType = model_fmt;   // set before LoadEngine() so its binding setup applies the explicit-batch (NCHW->CHW) shift
+
 		if( !LoadEngine(model_path.c_str(), input_blobs, output_blobs, NULL, device, stream) )
 		{
 			LogError(LOG_TRT "failed to load %s\n", model_path.c_str());
 			return false;
 		}
 
-		mModelType = model_fmt;
 		mModelPath = model_path;
 		mModelFile = pathFilename(mModelPath);
 		
@@ -1565,8 +1566,8 @@ bool tensorNet::LoadEngine( nvinfer1::ICudaEngine* engine,
 		nvinfer1::Dims inputDims = validateDims(engine->getBindingDimensions(inputIndex));
     #endif
 	#if NV_TENSORRT_MAJOR >= 7
-	    if( mModelType == MODEL_ONNX )
-		   inputDims = shiftDims(inputDims);   // change NCHW to CHW if EXPLICIT_BATCH set
+	    if( mModelType == MODEL_ONNX || mModelType == MODEL_ENGINE )
+		   inputDims = shiftDims(inputDims);   // change NCHW to CHW if EXPLICIT_BATCH set (also for prebuilt .engine on TRT10)
 	#endif
 	#else
 		Dims3 inputDims = engine->getBindingDimensions(inputIndex);
@@ -1646,8 +1647,8 @@ bool tensorNet::LoadEngine( nvinfer1::ICudaEngine* engine,
 	#endif
 
 	#if NV_TENSORRT_MAJOR >= 7
-		if( mModelType == MODEL_ONNX )
-			outputDims = shiftDims(outputDims);  // change NCHW to CHW if EXPLICIT_BATCH set
+		if( mModelType == MODEL_ONNX || mModelType == MODEL_ENGINE )
+			outputDims = shiftDims(outputDims);  // change NCHW to CHW if EXPLICIT_BATCH set (also for prebuilt .engine on TRT10)
 	#endif
 
 		const size_t outputSize = mMaxBatchSize * sizeDims(outputDims) * sizeof(float);
@@ -1865,7 +1866,7 @@ void tensorNet::SetStream( cudaStream_t stream )
 // ProcessNetwork
 bool tensorNet::ProcessNetwork( bool sync )
 {
-	if( TENSORRT_VERSION_CHECK(8,4,1) && mModelType == MODEL_ONNX )
+	if( TENSORRT_VERSION_CHECK(8,4,1) && (mModelType == MODEL_ONNX || mModelType == MODEL_ENGINE) )
 	{
 	#if TENSORRT_VERSION_CHECK(8,4,1)
 		// on TensorRT 8.4.1 (JetPack 5.0.2 / L4T R35.1.0) and newer, this warning appears:
