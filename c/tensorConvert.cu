@@ -256,3 +256,120 @@ cudaError_t cudaTensorNormMeanBGR( void* input, imageFormat format, size_t input
 }
 
 
+// gpuTensorNormLetterbox -- aspect-preserving (letterbox) resize + normalization, NCHW.
+// Source is bilinearly resized by r=min(oW/iW,oH/iH) into a centered region; the rest is padded.
+template<typename T, bool isBGR>
+__global__ void gpuTensorNormLetterbox( T* input, int iWidth, int iHeight, float* output, int oWidth, int oHeight,
+								int padX, int padY, int rWidth, int rHeight, float multiplier, float min_value, float pad_value )
+{
+	const int x = blockIdx.x * blockDim.x + threadIdx.x;
+	const int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+	if( x >= oWidth || y >= oHeight )
+		return;
+
+	const int n = oWidth * oHeight;
+	const int m = y * oWidth + x;
+
+	const int rx = x - padX;
+	const int ry = y - padY;
+
+	float3 rgb;
+
+	if( rx < 0 || ry < 0 || rx >= rWidth || ry >= rHeight )
+	{
+		// letterbox padding region (pad_value is in source pixel units, normalized below)
+		rgb = make_float3(pad_value, pad_value, pad_value);
+	}
+	else
+	{
+		// bilinear sample from source (cv2.resize INTER_LINEAR half-pixel convention)
+		const float sx = (float(rx) + 0.5f) * (float(iWidth)  / float(rWidth))  - 0.5f;
+		const float sy = (float(ry) + 0.5f) * (float(iHeight) / float(rHeight)) - 0.5f;
+
+		const int x0 = int(floorf(sx));
+		const int y0 = int(floorf(sy));
+
+		const float wx = sx - float(x0);
+		const float wy = sy - float(y0);
+
+		const int x0c = min(max(x0,     0), iWidth  - 1);
+		const int x1c = min(max(x0 + 1, 0), iWidth  - 1);
+		const int y0c = min(max(y0,     0), iHeight - 1);
+		const int y1c = min(max(y0 + 1, 0), iHeight - 1);
+
+		const T p00 = input[ y0c * iWidth + x0c ];
+		const T p01 = input[ y0c * iWidth + x1c ];
+		const T p10 = input[ y1c * iWidth + x0c ];
+		const T p11 = input[ y1c * iWidth + x1c ];
+
+		const float cx = (float(p00.x) * (1.0f - wx) + float(p01.x) * wx) * (1.0f - wy)
+					 + (float(p10.x) * (1.0f - wx) + float(p11.x) * wx) * wy;
+		const float cy = (float(p00.y) * (1.0f - wx) + float(p01.y) * wx) * (1.0f - wy)
+					 + (float(p10.y) * (1.0f - wx) + float(p11.y) * wx) * wy;
+		const float cz = (float(p00.z) * (1.0f - wx) + float(p01.z) * wx) * (1.0f - wy)
+					 + (float(p10.z) * (1.0f - wx) + float(p11.z) * wx) * wy;
+
+		rgb = isBGR ? make_float3(cz, cy, cx) : make_float3(cx, cy, cz);
+	}
+
+	output[n * 0 + m] = rgb.x * multiplier + min_value;
+	output[n * 1 + m] = rgb.y * multiplier + min_value;
+	output[n * 2 + m] = rgb.z * multiplier + min_value;
+}
+
+template<bool isBGR>
+cudaError_t launchTensorNormLetterbox( void* input, imageFormat format, size_t inputWidth, size_t inputHeight,
+							    float* output, size_t outputWidth, size_t outputHeight,
+							    const float2& range, float padValue,
+							    float* outScale, int* outPadX, int* outPadY, cudaStream_t stream )
+{
+	if( !input || !output )
+		return cudaErrorInvalidDevicePointer;
+
+	if( inputWidth == 0 || outputWidth == 0 || inputHeight == 0 || outputHeight == 0 )
+		return cudaErrorInvalidValue;
+
+	// aspect-preserving scale + symmetric (centered) padding -- matches view_yolo26.py / DeepStream
+	const float r = fminf( float(outputWidth) / float(inputWidth),
+					   float(outputHeight) / float(inputHeight) );
+
+	const int rWidth  = int(roundf(float(inputWidth)  * r));
+	const int rHeight = int(roundf(float(inputHeight) * r));
+	const int padX    = (int(outputWidth)  - rWidth)  / 2;
+	const int padY    = (int(outputHeight) - rHeight) / 2;
+
+	const float multiplier = (range.y - range.x) / 255.0f;
+
+	// launch kernel
+	const dim3 blockDim(8, 8);
+	const dim3 gridDim(iDivUp(outputWidth,blockDim.x), iDivUp(outputHeight,blockDim.y));
+
+	if( format == IMAGE_RGB8 )
+		gpuTensorNormLetterbox<uchar3, isBGR><<<gridDim, blockDim, 0, stream>>>((uchar3*)input, inputWidth, inputHeight, output, outputWidth, outputHeight, padX, padY, rWidth, rHeight, multiplier, range.x, padValue);
+	else if( format == IMAGE_RGBA8 )
+		gpuTensorNormLetterbox<uchar4, isBGR><<<gridDim, blockDim, 0, stream>>>((uchar4*)input, inputWidth, inputHeight, output, outputWidth, outputHeight, padX, padY, rWidth, rHeight, multiplier, range.x, padValue);
+	else if( format == IMAGE_RGB32F )
+		gpuTensorNormLetterbox<float3, isBGR><<<gridDim, blockDim, 0, stream>>>((float3*)input, inputWidth, inputHeight, output, outputWidth, outputHeight, padX, padY, rWidth, rHeight, multiplier, range.x, padValue);
+	else if( format == IMAGE_RGBA32F )
+		gpuTensorNormLetterbox<float4, isBGR><<<gridDim, blockDim, 0, stream>>>((float4*)input, inputWidth, inputHeight, output, outputWidth, outputHeight, padX, padY, rWidth, rHeight, multiplier, range.x, padValue);
+	else
+		return cudaErrorInvalidValue;
+
+	if( outScale ) *outScale = r;
+	if( outPadX )  *outPadX  = padX;
+	if( outPadY )  *outPadY  = padY;
+
+	return CUDA(cudaGetLastError());
+}
+
+// cudaTensorNormLetterboxRGB
+cudaError_t cudaTensorNormLetterboxRGB( void* input, imageFormat format, size_t inputWidth, size_t inputHeight,
+							     float* output, size_t outputWidth, size_t outputHeight,
+							     const float2& range, float padValue,
+							     float* outScale, int* outPadX, int* outPadY, cudaStream_t stream )
+{
+	return launchTensorNormLetterbox<false>(input, format, inputWidth, inputHeight, output, outputWidth, outputHeight, range, padValue, outScale, outPadX, outPadY, stream);
+}
+
+

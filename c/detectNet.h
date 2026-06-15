@@ -214,6 +214,7 @@ public:
 		DETECTOR_DETECTNET_V2,     /**< TAO DetectNet v2 */
 		DETECTOR_YOLOV5,           /**< YOLOv5 */
 		DETECTOR_YOLOV11,          /**< YOLOv11 */
+		DETECTOR_YOLO26,           /**< YOLO26 (NMS-free end2end [N,6] head) */
 		NUM_DETECTOR_TYPES
 	};
 
@@ -610,9 +611,11 @@ protected:
 	int postProcessDetectNet_v2( Detection* detections, uint32_t width, uint32_t height );
 	int postProcessYOLOv5( Detection* detections, uint32_t width, uint32_t height );
 	int postProcessYOLOv11( Detection* detections, uint32_t width, uint32_t height );
+	int postProcessYOLO26( Detection* detections, uint32_t width, uint32_t height );
 
 	int parseYOLOv5( Detection* out, uint32_t maxOut, uint32_t width, uint32_t height );
 	int parseYOLOv11( Detection* out, uint32_t maxOut, uint32_t width, uint32_t height );
+	int parseYOLO26( Detection* out, uint32_t maxOut, uint32_t width, uint32_t height );
 
 	int clusterDetections( Detection* detections, int n );
 	int nmsDetections( Detection* detections, int numDetections );
@@ -629,6 +632,10 @@ protected:
 	float mConfidenceThreshold;	 // TODO change this to per-class
 	float mClusteringThreshold;	 // TODO change this to per-class
 	float mNMSThreshold;
+
+	float mLetterboxScale;	 // YOLO26 letterbox resize ratio r = min(netW/imgW, netH/imgH)
+	int   mLetterboxPadX;	 // YOLO26 letterbox symmetric pad offsets (net-input pixels)
+	int   mLetterboxPadY;
 
 	float mMeanPixel;
 	float mLineWidth;

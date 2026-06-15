@@ -46,6 +46,16 @@ cudaError_t cudaTensorNormBGR( void* input, imageFormat format, size_t inputWidt
 cudaError_t cudaTensorNormMeanRGB( void* input, imageFormat format, size_t inputWidth, size_t inputHeight, float* output, size_t outputWidth, size_t outputHeight, const float2& range, const float3& mean, const float3& stdDev, cudaStream_t stream, size_t channelStride=0 );
 cudaError_t cudaTensorNormMeanBGR( void* input, imageFormat format, size_t inputWidth, size_t inputHeight, float* output, size_t outputWidth, size_t outputHeight, const float2& range, const float3& mean, const float3& stdDev, cudaStream_t stream, size_t channelStride=0 );
 
+/*
+ * Aspect-preserving (letterbox) downsample + pixel normalization, NCHW format.
+ * Matches DeepStream maintain-aspect-ratio=1 + symmetric-padding=1: the source is resized by
+ * r = min(outW/inW, outH/inH) (bilinear) into a centered region of the output, the remainder
+ * filled with padValue (in source pixel units, e.g. 114), then normalized to `range`.  The
+ * applied resize ratio and symmetric pad offsets are returned via outScale/outPadX/outPadY so
+ * detections can be inverse-mapped back to original-image coordinates.
+ */
+cudaError_t cudaTensorNormLetterboxRGB( void* input, imageFormat format, size_t inputWidth, size_t inputHeight, float* output, size_t outputWidth, size_t outputHeight, const float2& range, float padValue, float* outScale, int* outPadX, int* outPadY, cudaStream_t stream );
+
 
 #endif
 

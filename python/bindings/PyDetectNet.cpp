@@ -568,7 +568,7 @@ typedef struct {
 				  "       input_blob (string) -- name of the input layer of the model.\n\n" \
 				  "       output_cvg (string) -- name of the output coverage/confidence layer.\n\n" \
 				  "       output_bbox (string) -- name of the output bounding boxes layer.\n\n" \
-				  "       model_type (string) -- detector architecture: 'ssd', 'yolov5', 'yolov11'\n\n" \
+				  "       model_type (string) -- detector architecture: 'ssd', 'yolov5', 'yolov11', 'yolo26'\n\n" \
  				  DETECTNET_USAGE_STRING
 
 // Init

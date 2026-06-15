@@ -71,6 +71,10 @@ detectNet::detectNet( float meanPixel ) : tensorNet()
 	mTileOverlap    = 0.2f;
 	mTileScratch    = NULL;
 	mTileScratchCap = 0;
+
+	mLetterboxScale = 1.0f;
+	mLetterboxPadX  = 0;
+	mLetterboxPadY  = 0;
 }
 
 
@@ -95,6 +99,8 @@ detectNet::DetectorType detectNet::DetectorTypeFromStr( const char* str )
 		return DETECTOR_YOLOV5;
 	else if( strcasecmp(str, "yolov11") == 0 || strcasecmp(str, "yolo11") == 0 || strcasecmp(str, "yolo-v11") == 0 )
 		return DETECTOR_YOLOV11;
+	else if( strcasecmp(str, "yolo26") == 0 || strcasecmp(str, "yolov26") == 0 || strcasecmp(str, "yolo-v26") == 0 )
+		return DETECTOR_YOLO26;
 	else if( strcasecmp(str, "ssd") == 0 || strcasecmp(str, "ssd-onnx") == 0 )
 		return DETECTOR_SSD_ONNX;
 	else if( strcasecmp(str, "ssd-uff") == 0 )
@@ -120,6 +126,7 @@ const char* detectNet::DetectorTypeToStr( DetectorType type )
 		case DETECTOR_DETECTNET_V2: return "detectnet-v2";
 		case DETECTOR_YOLOV5:       return "yolov5";
 		case DETECTOR_YOLOV11:      return "yolov11";
+		case DETECTOR_YOLO26:       return "yolo26";
 		default:                    return "unknown";
 	}
 }
@@ -523,6 +530,19 @@ bool detectNet::allocDetections()
 		LogInfo(LOG_TRT "detectNet -- YOLOv11 output dims: %u x %u\n", dim0, dim1);
 		LogInfo(LOG_TRT "detectNet -- number of object classes: %u\n", mNumClasses);
 	}
+	else if( mDetectorType == DETECTOR_YOLO26 )
+	{
+		// NMS-free end2end head: output is [N, 6] = [x1,y1,x2,y2, score, class_id].
+		// N (num boxes) is the larger dim; the "6" is fixed regardless of class count, so
+		// mNumClasses comes from the labels file (loadClassInfo runs next), not the tensor.
+		const uint32_t dim0 = DIMS_C(mOutputs[0].dims);
+		const uint32_t dim1 = DIMS_H(mOutputs[0].dims);
+
+		mMaxDetections = (dim0 > dim1) ? dim0 : dim1;
+
+		LogInfo(LOG_TRT "detectNet -- YOLO26 output dims: %u x %u\n", dim0, dim1);
+		LogInfo(LOG_TRT "detectNet -- YOLO26 maximum detections: %u\n", mMaxDetections);
+	}
 	else
 	{
 		mNumClasses = DIMS_C(mOutputs[OUTPUT_CVG].dims);
@@ -549,7 +569,9 @@ bool detectNet::loadClassInfo( const char* filename )
 	if( !LoadClassLabels(filename, mClassDesc, mClassSynset, mNumClasses) )
 		return false;
 
-	if( IsModelType(MODEL_UFF) )
+	// YOLO26's [N,6] tensor doesn't encode the class count (unlike YOLOv5/v11 where it is
+	// dim-4), so take it from the labels file -- same as UFF.
+	if( IsModelType(MODEL_UFF) || mDetectorType == DETECTOR_YOLO26 )
 		mNumClasses = mClassDesc.size();
 
 	LogInfo(LOG_TRT "detectNet -- number of object classes:  %u\n", mNumClasses);
@@ -947,7 +969,21 @@ bool detectNet::preProcess( void* input, uint32_t width, uint32_t height, imageF
 			return false;
 		}
 	}
-	
+	else if( mDetectorType == DETECTOR_YOLO26 )
+	{
+		// YOLO26 -- RGB /255 with aspect-preserving letterbox (pad=114), matching DeepStream
+		// maintain-aspect-ratio=1 + symmetric-padding=1.  Store scale/pad for inverse-mapping.
+		if( CUDA_FAILED(cudaTensorNormLetterboxRGB(input, format, width, height,
+									    mInputs[0].CUDA, GetInputWidth(), GetInputHeight(),
+									    make_float2(0.0f, 1.0f), 114.0f,
+									    &mLetterboxScale, &mLetterboxPadX, &mLetterboxPadY,
+									    GetStream())) )
+		{
+			LogError(LOG_TRT "detectNet::Detect() -- cudaTensorNormLetterboxRGB() failed\n");
+			return false;
+		}
+	}
+
 	PROFILER_END(PROFILER_PREPROCESS);
 	return true;
 }
@@ -969,6 +1005,7 @@ int detectNet::postProcess( void* input, uint32_t width, uint32_t height, imageF
 		case DETECTOR_DETECTNET_V2:  numDetections = postProcessDetectNet_v2(detections, width, height); break;
 		case DETECTOR_YOLOV5:        numDetections = postProcessYOLOv5(detections, width, height); break;
 		case DETECTOR_YOLOV11:       numDetections = postProcessYOLOv11(detections, width, height); break;
+		case DETECTOR_YOLO26:        numDetections = postProcessYOLO26(detections, width, height); break;
 		default: return -1;
 	}
 
@@ -1420,6 +1457,67 @@ int detectNet::postProcessYOLOv11( Detection* detections, uint32_t width, uint32
 {
 	const int n = parseYOLOv11(detections, mMaxDetections, width, height);
 	return nmsDetections(detections, n);
+}
+
+
+// parseYOLO26 -- NMS-free end2end head.  Output rows are [x1,y1,x2,y2, score, class_id] in
+// letterbox (net-input) pixel space, already argmaxed.  Threshold on score, then inverse-map
+// the corners back to original-image coordinates using the scale/pad stored in preProcess().
+int detectNet::parseYOLO26( Detection* out, uint32_t maxOut, uint32_t width, uint32_t height )
+{
+	const float* output = mOutputs[0].CPU;
+
+	const uint32_t dim0 = DIMS_C(mOutputs[0].dims);
+	const uint32_t dim1 = DIMS_H(mOutputs[0].dims);
+
+	// larger dim = number of boxes (e.g. 18900), smaller dim = row stride (6)
+	const uint32_t numBoxes = (dim0 > dim1) ? dim0 : dim1;
+	const uint32_t stride   = (dim0 > dim1) ? dim1 : dim0;
+
+	// inverse letterbox map (must match cudaTensorNormLetterboxRGB): img = (net - pad) / r
+	const float r    = (mLetterboxScale > 0.0f) ? mLetterboxScale : 1.0f;
+	const float padX = float(mLetterboxPadX);
+	const float padY = float(mLetterboxPadY);
+
+	int numDetections = 0;
+
+	for( uint32_t i = 0; i < numBoxes && (uint32_t)numDetections < maxOut; i++ )
+	{
+		const float* row   = output + i * stride;
+		const float  score = row[4];
+
+		if( score < mConfidenceThreshold )
+			continue;
+
+		// corners in net-input (letterbox) pixels -> original image pixels
+		const float x1 = (row[0] - padX) / r;
+		const float y1 = (row[1] - padY) / r;
+		const float x2 = (row[2] - padX) / r;
+		const float y2 = (row[3] - padY) / r;
+
+		// skip degenerate boxes (matches DeepStream-Yolo decodeTensorYolo)
+		if( (x2 - x1) < 1.0f || (y2 - y1) < 1.0f )
+			continue;
+
+		out[numDetections].ClassID    = (uint32_t)row[5];
+		out[numDetections].Confidence = score;
+		out[numDetections].TrackID    = -1;
+		out[numDetections].Left       = x1;
+		out[numDetections].Top        = y1;
+		out[numDetections].Right      = x2;
+		out[numDetections].Bottom     = y2;
+
+		numDetections++;
+	}
+
+	return numDetections;
+}
+
+
+// postProcessYOLO26 -- NMS-free (the end2end head already deduplicated); no nmsDetections().
+int detectNet::postProcessYOLO26( Detection* detections, uint32_t width, uint32_t height )
+{
+	return parseYOLO26(detections, mMaxDetections, width, height);
 }
 
 
