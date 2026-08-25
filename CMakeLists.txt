@@ -23,7 +23,7 @@ endif()
 
 
 # setup build flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-write-strings -Wno-deprecated-declarations")	# -std=c++14 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wno-write-strings -Wno-deprecated-declarations")	# CUDA 13 / TensorRT 10 require C++17
 set(BUILD_DEPS "YES" CACHE BOOL "If YES, will install dependencies into sandbox.  Automatically reset to NO after dependencies are installed.")
 set(BUILD_INTERACTIVE "YES" CACHE BOOL "If NO, will download/install the default DNN models without prompting the user, and skip installation of PyTorch.")
 set(BUILD_EXPERIMENTAL "NO" CACHE BOOL "If YES, will enable support for experimental DNNs, examples, and plugins")
@@ -69,19 +69,52 @@ message("-- CUDA version: ${CUDA_VERSION}")
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -O3)
 
+# select which GPU architectures to generate device code for:
+#
+#   SM_53 = Nano/TX1     SM_62 = TX2      SM_72 = Xavier
+#   SM_87 = Orin         SM_110 = Thor    SM_121 = Spark (GB10)
+#
+# CUDA 13 (JetPack 7) removed Maxwell/Pascal/Volta and added Thor/GB10, and
+# passing nvcc an architecture it doesn't know is a fatal error - so ask nvcc
+# what it actually supports instead of mapping it from the CUDA version.
+set(CUDA_JETSON_ARCHS "53;62;72;87;110;121" CACHE STRING "GPU architectures (SM versions) to generate code for on aarch64")
+
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-	message("-- CUDA ${CUDA_VERSION} detected (${CMAKE_SYSTEM_PROCESSOR}), enabling SM_53 SM_62")
-	set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -gencode arch=compute_53,code=sm_53 -gencode arch=compute_62,code=sm_62)
+	execute_process(COMMAND ${CUDA_NVCC_EXECUTABLE} --list-gpu-arch
+				 OUTPUT_VARIABLE NVCC_SUPPORTED_ARCHS
+				 ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	if(CUDA_VERSION_MAJOR GREATER 9)
-		message("-- CUDA ${CUDA_VERSION} detected (${CMAKE_SYSTEM_PROCESSOR}), enabling SM_72")
-		set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -gencode arch=compute_72,code=sm_72)
+	string(REPLACE "\n" ";" NVCC_SUPPORTED_ARCHS "${NVCC_SUPPORTED_ARCHS}")
+
+	if(NOT NVCC_SUPPORTED_ARCHS)
+		# nvcc predates --list-gpu-arch (CUDA < 11), fall back to the version table
+		set(NVCC_SUPPORTED_ARCHS "compute_53;compute_62")
+
+		if(CUDA_VERSION_MAJOR GREATER 9)
+			list(APPEND NVCC_SUPPORTED_ARCHS "compute_72")
+		endif()
+
+		if(CUDA_VERSION_MAJOR GREATER 10)
+			list(APPEND NVCC_SUPPORTED_ARCHS "compute_87")
+		endif()
 	endif()
 
-	if(CUDA_VERSION_MAJOR GREATER 10)
-		message("-- CUDA ${CUDA_VERSION} detected (${CMAKE_SYSTEM_PROCESSOR}), enabling SM_87")
-		set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -gencode arch=compute_87,code=sm_87)
+	set(CUDA_ENABLED_ARCHS "")
+
+	foreach(SM ${CUDA_JETSON_ARCHS})
+		list(FIND NVCC_SUPPORTED_ARCHS "compute_${SM}" SM_FOUND)
+
+		if(NOT SM_FOUND EQUAL -1)
+			set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -gencode arch=compute_${SM},code=sm_${SM})
+			set(CUDA_ENABLED_ARCHS "${CUDA_ENABLED_ARCHS} SM_${SM}")
+		endif()
+	endforeach()
+
+	if(NOT CUDA_ENABLED_ARCHS)
+		message(FATAL_ERROR "CUDA ${CUDA_VERSION} doesn't support any of the requested GPU architectures (${CUDA_JETSON_ARCHS})")
 	endif()
+
+	message("-- CUDA ${CUDA_VERSION} detected (${CMAKE_SYSTEM_PROCESSOR}), enabling${CUDA_ENABLED_ARCHS}")
 endif()
 
 # OpenCV used for findHomography() and decomposeHomography()
@@ -103,7 +136,14 @@ else()
 endif()
 	
 # check for VPI (TODO: VPI 1.0 support for JetPack 4.x)
-find_package(VPI 2.0)
+# each VPI major version ships its own cmake package that only accepts a
+# request with a matching major version, so probe them newest-first
+# (VPI 4 = JetPack 7, VPI 3 = JetPack 6.1+, VPI 2 = JetPack 5/6)
+foreach(VPI_MAJOR 4 3 2)
+	if(NOT VPI_FOUND)
+		find_package(VPI ${VPI_MAJOR}.0 QUIET)
+	endif()
+endforeach()
 
 if( NOT VPI_FOUND )
 	message("-- didn't find VPI on system, disabling VPI")

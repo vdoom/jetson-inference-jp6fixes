@@ -61,7 +61,15 @@ if [ $ARCH != "x86_64" ]; then
 fi
 
 # install cython for if numpy gets built by later packages
-pip3 install --no-cache-dir --verbose --upgrade Cython
+# Ubuntu 24.04 (JetPack 7) marks the system Python as externally-managed (PEP 668),
+# which makes a plain 'pip3 install' fail with 'externally-managed-environment'
+PIP_FLAGS=""
+
+if pip3 install --help 2>/dev/null | grep -q -- "--break-system-packages"; then
+	PIP_FLAGS="--break-system-packages"
+fi
+
+pip3 install --no-cache-dir --verbose --upgrade $PIP_FLAGS Cython
 
 # download/install models and PyTorch
 if [ $BUILD_CONTAINER = "NO" ]; then

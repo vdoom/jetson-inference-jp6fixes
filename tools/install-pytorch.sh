@@ -132,6 +132,23 @@ function download_file()
 
 
 #
+# install pip packages system-wide
+# Ubuntu 24.04 (JetPack 7) marks the system Python as externally-managed
+# (PEP 668), which makes a plain 'pip3 install' fail
+#
+function pip_install()
+{
+	local pip_flags=""
+
+	if pip3 install --help 2>/dev/null | grep -q -- "--break-system-packages"; then
+		pip_flags="--break-system-packages"
+	fi
+
+	sudo pip3 install --verbose $pip_flags "$@"
+}
+
+
+#
 # download and install a pip wheel
 #
 function download_wheel()
@@ -288,6 +305,8 @@ function install_pytorch()
 		install_pytorch_v200_python38_jp50
 	elif [ $pytorch_version = "2.1" ]; then
 		install_pytorch_v210_python310_jp60
+	elif [ $pytorch_version = "2.x" ]; then
+		install_pytorch_v2_python312_jp70
 	else
 		echo "$LOG invalid PyTorch version selected:  PyTorch $pytorch_version"
 		exit_message 1
@@ -707,6 +726,42 @@ function install_pytorch_v210_python310_jp60()
 	return 0
 }
 
+function install_pytorch_v2_python312_jp70()
+{
+	echo "$LOG Downloading PyTorch (Python 3.12)..."
+
+	# install apt packages
+	# (note that on Ubuntu 24.04, libopenblas-base was replaced by libopenblas0)
+	install_deb_package "python3-pip" FOUND_PIP3
+	install_deb_package "qtbase5-dev" FOUND_QT5
+	install_deb_package "libjpeg-dev" FOUND_JPEG
+	install_deb_package "zlib1g-dev" FOUND_ZLIB
+	install_deb_package "libopenblas0" FOUND_OPENBLAS
+	install_deb_package "libopenmpi-dev" FOUND_OPENMPI
+	install_deb_package "libomp-dev" FOUND_OPENMP
+	install_deb_package "ninja-build" FOUND_NINJA
+
+	# JetPack 7 has CUDA 13 and Python 3.12, which these wheels are built against.
+	# the index inherits from PyPI, so the other dependencies still resolve from there.
+	local PYTORCH_INDEX="https://pypi.jetson-ai-lab.io/sbsa/cu130/+simple"
+
+	pip_install --index-url $PYTORCH_INDEX Cython numpy tensorboard onnx
+
+	# install pytorch + torchvision (their versions are matched by the resolver)
+	pip_install --index-url $PYTORCH_INDEX torch torchvision
+
+	local install_status=$?
+
+	if [ $install_status != 0 ]; then
+		echo "$LOG failed to install PyTorch (Python 3.12)"
+		echo "$LOG see https://pypi.jetson-ai-lab.io for the wheels that are available"
+		return 1
+	fi
+
+	return 0
+}
+
+
 #
 # check L4T version
 #
@@ -820,6 +875,12 @@ while true; do
 		# JetPack 6.x
 		PYTHON3_VERSION="3.10"
 		PYTORCH_VERSION="2.1"
+		PYTHON_VERSION_ONE=$PYTHON3_VERSION
+
+	elif [[ $JETSON_L4T_RELEASE -ge 38 ]]; then
+		# JetPack 7.x
+		PYTHON3_VERSION="3.12"
+		PYTORCH_VERSION="2.x"
 		PYTHON_VERSION_ONE=$PYTHON3_VERSION
 	fi
 	

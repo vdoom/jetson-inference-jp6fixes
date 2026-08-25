@@ -20,7 +20,8 @@ Follow the **[Hello AI World](#hello-ai-world)** tutorial for running inference 
 * [System Requirements](#recommended-system-requirements)
 * [Change Log](CHANGELOG.md)
 
-> &gt; &nbsp; JetPack 6 is now supported on Orin devices ([developer.nvidia.com/jetpack](https://developer.nvidia.com/embedded/jetpack)) <br/>
+> &gt; &nbsp; JetPack 7 is now supported (CUDA 13 / TensorRT 10 / Ubuntu 24.04) ([developer.nvidia.com/jetpack](https://developer.nvidia.com/embedded/jetpack)) <br/>
+> &gt; &nbsp; JetPack 6 is supported on Orin devices ([developer.nvidia.com/jetpack](https://developer.nvidia.com/embedded/jetpack)) <br/>
 > &gt; &nbsp; Check out the Generative AI and LLM tutorials on [Jetson AI Lab](https://www.jetson-ai-lab.com/)! <br/>
 > &gt; &nbsp; See the [Change Log](CHANGELOG.md) for the latest updates and new features. <br/>
 
@@ -263,6 +264,7 @@ The project comes with a number of pre-trained models that are available to use 
 * Jetson Xavier NX Developer Kit with JetPack 4.4 or newer (Ubuntu 18.04 aarch64).  
 * Jetson AGX Xavier Developer Kit with JetPack 4.0 or newer (Ubuntu 18.04 aarch64).  
 * Jetson AGX Orin Developer Kit with JetPack 5.0 or newer (Ubuntu 20.04 aarch64).
+* Jetson AGX Thor Developer Kit with JetPack 7.0 or newer (Ubuntu 24.04 aarch64).
 * Jetson TX2 Developer Kit with JetPack 3.0 or newer (Ubuntu 16.04 aarch64).  
 * Jetson TX1 Developer Kit with JetPack 2.3 or newer (Ubuntu 16.04 aarch64).  
 

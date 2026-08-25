@@ -12,7 +12,14 @@ find_package(jetson-utils)
 find_package(jetson-inference)
 
 # find VPI package (optional)
-find_package(VPI 2.0)
+# each VPI major version ships its own cmake package that only accepts a
+# request with a matching major version, so probe them newest-first
+# (VPI 4 = JetPack 7, VPI 3 = JetPack 6.1+, VPI 2 = JetPack 5/6)
+foreach(VPI_MAJOR 4 3 2)
+	if(NOT VPI_FOUND)
+		find_package(VPI ${VPI_MAJOR}.0 QUIET)
+	endif()
+endforeach()
 
 # CUDA is required
 find_package(CUDA)

@@ -28,6 +28,7 @@
 #include <vpi/Array.h>
 #include <vpi/Image.h>
 #include <vpi/Status.h>
+#include <vpi/Version.h>
 #include <vpi/Stream.h>
 #include <vpi/algo/KLTFeatureTracker.h>
 
