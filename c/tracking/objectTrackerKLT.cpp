@@ -23,6 +23,8 @@
 #ifdef HAS_VPI
 
 #include "objectTrackerKLT.h"
+
+#include <vpi/Version.h>
 #include "cudaColorspace.h"
 #include "cudaDraw.h"
 
@@ -335,7 +337,15 @@ int objectTrackerKLT::Process( void* input, uint32_t width, uint32_t height, ima
 	VPIImageData imgData = {};
 	
 	VPI_VERIFY(vpiImageLockData(currImage, VPI_LOCK_WRITE, VPI_IMAGE_BUFFER_CUDA_PITCH_LINEAR, &imgData));
-	CUDA_VERIFY(cudaConvertColor(input, format, imgData.buffer.pitch.planes[0].data, IMAGE_GRAY8, width, height));
+
+	// VPI 3 replaced the plane's void* data pointer with pBase + offsetBytes
+#if NV_VPI_VERSION_MAJOR >= 3
+	void* imgPtr = imgData.buffer.pitch.planes[0].pBase + imgData.buffer.pitch.planes[0].offsetBytes;
+#else
+	void* imgPtr = imgData.buffer.pitch.planes[0].data;
+#endif
+
+	CUDA_VERIFY(cudaConvertColor(input, format, imgPtr, IMAGE_GRAY8, width, height));
 	VPI_VERIFY(vpiImageUnlock(currImage));
 	
 	if( mFrameCount == 0 )
