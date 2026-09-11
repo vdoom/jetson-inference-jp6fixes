@@ -21,7 +21,10 @@ unset(PYTHONLIBS_VERSION_STRING CACHE)
 message("-- detecting Python ${PYTHON_BINDING_VERSION}...")
 
 # --- Modern path (CMake >= 3.18): FindPython3 with Interpreter/Development/NumPy ---
-find_package(Python3 ${PYTHON_BINDING_VERSION} QUIET COMPONENTS Interpreter Development NumPy)
+# EXACT matters:  without it the version acts as a *minimum*, so a request for the
+# distro's Python can silently match a newer one built into /usr/local and link
+# against the wrong (often static, non-PIC) libpython.
+find_package(Python3 ${PYTHON_BINDING_VERSION} EXACT QUIET COMPONENTS Interpreter Development NumPy)
 
 if(Python3_Interpreter_FOUND AND Python3_Development_FOUND)
   # Normalize variables so the rest of the script can remain similar
