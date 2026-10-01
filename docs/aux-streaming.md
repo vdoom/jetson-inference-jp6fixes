@@ -129,6 +129,9 @@ As mentioned above, any of the examples from jetson-inference can be substituted
                          to disk, in addition to the primary output above
   --bitrate=BITRATE      desired target VBR bitrate for compressed streams,
                          in bits per second. The default is 4000000 (4 Mbps)
+  --keyframe-interval=N  number of frames between keyframes for compressed streams,
+                         by default 15-30 for network streams (so clients can join
+                         them), and the encoder's default for files
   --headless             don't create a default OpenGL GUI window
 ```
 
@@ -315,9 +318,9 @@ The following codecs are supported:
 
 #### AV1
 
-AV1 works with MKV and MP4 files and with RTP/RTSP streams (not with WebRTC, RTMP, AVI or FLV):
+AV1 works with MKV and MP4 files and with RTP/RTSP and WebRTC streams (not with RTMP, AVI or FLV):
 
-* Encoding uses the hardware encoder (`nvv4l2av1enc`) on Orin and newer, except on Orin Nano which has no NVENC.  Otherwise it uses a software encoder, and `svtav1enc` is the only one fast enough for realtime (~40 FPS at 720p on Orin Nano).  JetPack 6 doesn't include it - install it with [`utils/scripts/gst-svtav1`](https://github.com/vdoom/jetson-utils-JP6Fixes/blob/master/scripts/gst-svtav1)
+* Encoding uses the hardware encoder (`nvv4l2av1enc`) on Orin and newer, except on Orin Nano which has no NVENC.  Otherwise it uses a software encoder, and `svtav1enc` is the only one fast enough for realtime (~40 FPS at 720p on Orin Nano).  JetPack 6 doesn't include it, and JetPack 7's (SVT-AV1 1.7) is too slow for realtime (~11 FPS at 720p on Orin NX) - install it with [`utils/scripts/gst-svtav1`](https://github.com/vdoom/jetson-utils-JP6Fixes/blob/master/scripts/gst-svtav1)
 * Decoding uses the hardware decoder (`nvv4l2decoder`) on Orin and newer, including Orin Nano, and otherwise `dav1ddec` or `av1dec`
 * RTP/RTSP need `rtpav1pay`/`rtpav1depay` from gst-plugins-rs, which aren't in JetPack - install them with [`utils/scripts/gst-rtp-av1`](https://github.com/vdoom/jetson-utils-JP6Fixes/blob/master/scripts/gst-rtp-av1) (`--dav1d` also installs `dav1ddec`)
 * When receiving AV1 over RTP, set `--input-codec=av1`
