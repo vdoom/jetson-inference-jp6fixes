@@ -317,9 +317,9 @@ The following codecs are supported:
 
 AV1 works with MKV and MP4 files and with RTP/RTSP streams (not with WebRTC, RTMP, AVI or FLV):
 
-* Encoding uses the hardware encoder (`nvv4l2av1enc`) on Orin and newer, except on Orin Nano which has no NVENC.  Otherwise it uses a software encoder, and `svtav1enc` is the only one fast enough for realtime (~40 FPS at 720p on Orin Nano).  JetPack 6 doesn't include it - install it with [`utils/scripts/gst-svtav1`](../utils/scripts/gst-svtav1)
+* Encoding uses the hardware encoder (`nvv4l2av1enc`) on Orin and newer, except on Orin Nano which has no NVENC.  Otherwise it uses a software encoder, and `svtav1enc` is the only one fast enough for realtime (~40 FPS at 720p on Orin Nano).  JetPack 6 doesn't include it - install it with [`utils/scripts/gst-svtav1`](https://github.com/vdoom/jetson-utils-JP6Fixes/blob/master/scripts/gst-svtav1)
 * Decoding uses the hardware decoder (`nvv4l2decoder`) on Orin and newer, including Orin Nano, and otherwise `dav1ddec` or `av1dec`
-* RTP/RTSP need `rtpav1pay`/`rtpav1depay` from gst-plugins-rs, which aren't in JetPack - install them with [`utils/scripts/gst-rtp-av1`](../utils/scripts/gst-rtp-av1) (`--dav1d` also installs `dav1ddec`)
+* RTP/RTSP need `rtpav1pay`/`rtpav1depay` from gst-plugins-rs, which aren't in JetPack - install them with [`utils/scripts/gst-rtp-av1`](https://github.com/vdoom/jetson-utils-JP6Fixes/blob/master/scripts/gst-rtp-av1) (`--dav1d` also installs `dav1ddec`)
 * When receiving AV1 over RTP, set `--input-codec=av1`
 
 ```bash
@@ -327,7 +327,7 @@ $ video-viewer --output-codec=av1 /dev/video0 rtsp://@:1234/my_output  # stream 
 $ video-viewer --input-codec=av1 rtp://@:1234 my_video.mkv             # receive AV1 over RTP and save it
 ```
 
-See [`utils/docs/codecs.md`](../utils/docs/codecs.md) for the encoder speeds and what was tested.
+See [`utils/docs/codecs.md`](https://github.com/vdoom/jetson-utils-JP6Fixes/blob/master/docs/codecs.md) for the encoder speeds and what was tested.
 
 
 #### Resizing Inputs
