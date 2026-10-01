@@ -69,4 +69,5 @@ sudo docker build -t $CONTAINER_LOCAL_IMAGE -f Dockerfile \
           --build-arg BASE_IMAGE=$BASE_IMAGE \
 		--build-arg OPENCV_URL=$OPENCV_URL \
 		--build-arg OPENCV_DEB=$OPENCV_DEB \
+		--build-arg AV1=${AV1:-off} \
 		.

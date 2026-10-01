@@ -70,6 +70,26 @@ RUN mkdir -p /usr/local/include/gstreamer-1.0/gst && \
     ls -ll /usr/local/include/gstreamer-1.0/gst/webrtc
 
 
+#
+# AV1 over RTP/RTSP (rtpav1pay/rtpav1depay) and the svtav1enc/dav1ddec software codecs
+# aren't in JetPack, build them with --build-arg AV1=on (needs GStreamer 1.20+, JetPack 6+)
+# see utils/docs/codecs.md
+#
+ARG AV1=off
+
+COPY utils/scripts/gst-rtp-av1 utils/scripts/gst-svtav1 /tmp/av1/
+
+RUN if [ "$AV1" = "on" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends curl git patch pkg-config meson ninja-build && \
+        /tmp/av1/gst-rtp-av1 --dav1d --work /tmp/av1/work && \
+        /tmp/av1/gst-svtav1 --work /tmp/av1/work && \
+        rm -rf /var/lib/apt/lists/* && \
+        apt-get clean; \
+    fi && \
+    rm -rf /tmp/av1
+
+
 # 
 # install python packages
 #
