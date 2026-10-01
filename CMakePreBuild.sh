@@ -47,6 +47,12 @@ $SUDO apt-get install -y --no-install-recommends \
 		qtbase5-dev \
 		avahi-utils
 
+# the WebRTC server builds against the libsoup that libnice uses (libsoup 2 and 3 can't be loaded
+# in one process), and that's libsoup 3 on Ubuntu 24.04 (JetPack 7) - CMake picks the right one
+if apt-cache show libsoup-3.0-dev > /dev/null 2>&1; then
+	$SUDO apt-get install -y --no-install-recommends libsoup-3.0-dev
+fi
+
 if [ $BUILD_CONTAINER = "NO" ]; then
 	# these are installed in a different step in the Dockerfile
 	$SUDO apt-get install -y --no-install-recommends \
