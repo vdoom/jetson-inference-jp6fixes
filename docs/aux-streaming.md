@@ -30,7 +30,7 @@ Streams are identified via a resource URI and are acquired through the [`videoSo
 | [Image file](#image-files)           | `file://`    | `file://my_image.jpg`       | Supports loading JPG, PNG, TGA, BMP, GIF, ect.           |
 | [Image sequence](#image-files)       | `file://`    | `file://my_directory/`      | Searches for images in alphanumeric order                |
 
-* Supported decoder codecs:  H.264, H.265, VP8, VP9, MPEG-2, MPEG-4, MJPEG
+* Supported decoder codecs:  H.264, H.265, AV1, VP8, VP9, MPEG-2, MPEG-4, MJPEG
 * The `file://`, `v4l2://`, and `csi://` protocol prefixes can be omitted from the URI as shorthand
 
 ### Output Streams
@@ -45,7 +45,7 @@ Streams are identified via a resource URI and are acquired through the [`videoSo
 | [Image sequence](#image-files)   | `file://`    | `file://image_%i.jpg`       | `%i` is replaced by the image number in the sequence     |
 | [OpenGL window](#output-streams) | `display://` | `display://0`               | Creates GUI window on screen 0                           |
 
-* Supported encoder codecs:  H.264, H.265, VP8, VP9, MJPEG
+* Supported encoder codecs:  H.264, H.265, AV1, VP8, VP9, MJPEG (see [AV1](#av1) for its requirements)
 * The `file://` protocol prefixes can be omitted from the URI as shorthand
 * By default, an OpenGL display window will be created unless `--headless` is specified
 
@@ -82,7 +82,7 @@ As mentioned above, any of the examples from jetson-inference can be substituted
   --input-rate=RATE      explicitly request a framerate of the stream (optional)
   --input-save=FILE      path to video file for saving the input stream to disk
   --input-codec=CODEC    RTP requires the codec to be set, one of these:
-                             * h264, h265
+                             * h264, h265, av1
                              * vp8, vp9
                              * mpeg2, mpeg4
                              * mjpeg
@@ -117,7 +117,7 @@ As mentioned above, any of the examples from jetson-inference can be substituted
                              * webrtc://@:1234/my_stream (WebRTC stream)
                              * display://0               (OpenGL window)
   --output-codec=CODEC   desired codec for compressed output streams:
-                            * h264 (default), h265
+                            * h264 (default), h265, av1
                             * vp8, vp9
                             * mpeg2, mpeg4
                             * mjpeg
@@ -216,7 +216,7 @@ The commands above specify RTP as the input source, where another remote host on
 
 #### Transmitting RTP
 
-To transmit an RTP output stream, specify the target IP/port as the `output_URI`. If desired, you can specify the bitrate (the default is `--bitrate=4000000` or 4Mbps) and/or the output codec (the default is `--output-codec=h264`) which can be `h264, h265, vp8, vp9, mjpeg`
+To transmit an RTP output stream, specify the target IP/port as the `output_URI`. If desired, you can specify the bitrate (the default is `--bitrate=4000000` or 4Mbps) and/or the output codec (the default is `--output-codec=h264`) which can be `h264, h265, av1, vp8, vp9, mjpeg`
 
 ```bash
 $ video-viewer --bitrate=1000000 csi://0 rtp://<remote-ip>:1234         # transmit camera over RTP, encoded as H.264 @ 1Mbps 
@@ -310,8 +310,24 @@ $ video-viewer --output-codec=h265 input.mp4 output.mp4  # transcode video to H.
 
 The following codecs are supported:
 
-* Decode - `h264, h265, vp8, vp9, mpeg2, mpeg4, mjpeg`
-* Encode - `h264, h265, vp8, vp9, mjpeg`
+* Decode - `h264, h265, av1, vp8, vp9, mpeg2, mpeg4, mjpeg`
+* Encode - `h264, h265, av1, vp8, vp9, mjpeg`
+
+#### AV1
+
+AV1 works with MKV and MP4 files and with RTP/RTSP streams (not with WebRTC, RTMP, AVI or FLV):
+
+* Encoding uses the hardware encoder (`nvv4l2av1enc`) on Orin and newer, except on Orin Nano which has no NVENC.  Otherwise it uses a software encoder, and `svtav1enc` is the only one fast enough for realtime (~40 FPS at 720p on Orin Nano).  JetPack 6 doesn't include it - install it with [`utils/scripts/gst-svtav1`](../utils/scripts/gst-svtav1)
+* Decoding uses the hardware decoder (`nvv4l2decoder`) on Orin and newer, including Orin Nano, and otherwise `dav1ddec` or `av1dec`
+* RTP/RTSP need `rtpav1pay`/`rtpav1depay` from gst-plugins-rs, which aren't in JetPack - install them with [`utils/scripts/gst-rtp-av1`](../utils/scripts/gst-rtp-av1) (`--dav1d` also installs `dav1ddec`)
+* When receiving AV1 over RTP, set `--input-codec=av1`
+
+```bash
+$ video-viewer --output-codec=av1 /dev/video0 rtsp://@:1234/my_output  # stream a camera as AV1 over RTSP
+$ video-viewer --input-codec=av1 rtp://@:1234 my_video.mkv             # receive AV1 over RTP and save it
+```
+
+See [`utils/docs/codecs.md`](../utils/docs/codecs.md) for the encoder speeds and what was tested.
 
 
 #### Resizing Inputs
